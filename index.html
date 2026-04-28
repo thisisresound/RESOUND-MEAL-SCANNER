@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Resound · Meal</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --acc:     #7DD3A8;  /* soft mint / food green */
+  --acc-d:   rgba(125,211,168,.1);
+  --acc-b:   rgba(125,211,168,.22);
+  --green:   #6EE7A0;
+  --green-d: rgba(110,231,160,.08);
+  --red:     #F4A4A4;
+  --red-d:   rgba(244,164,164,.08);
+  --amber:   #FBBF24;
+  --amber-d: rgba(251,191,36,.08);
+  --bg:      #080808;
+  --s1:      #111113;
+  --s2:      #0D0D0F;
+  --s3:      #191920;
+  --bdr:     rgba(255,255,255,.07);
+  --bdr2:    rgba(255,255,255,.12);
+  --txt:     #F0EEE8;
+  --txt-m:   rgba(240,238,232,.45);
+  --txt-l:   rgba(240,238,232,.22);
+  --font:    'DM Mono', monospace;
+  --head:    'Syne', sans-serif;
+  --ease:    cubic-bezier(.4,0,.2,1);
+  --spring:  cubic-bezier(.22,.68,0,1.2);
+  --bar-h:   62px;
+  --tab-h:   46px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; font-family: var(--font);
+  background: var(--bg); color: var(--txt);
+  overflow: hidden; -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--bar-h);
+  background: var(--s2); border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+}
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand-r { font-family: var(--head); font-size: .78rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--acc); }
+.brand-sub { font-size: .48rem; letter-spacing: .2em; text-transform: uppercase; color: var(--txt-l); }
+
+.topbar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.counter-pill {
+  display: flex; align-items: baseline; gap: 5px;
+  background: var(--acc-d); border: 1px solid var(--acc-b); padding: 6px 12px;
+}
+.counter-n { font-family: var(--head); font-size: 1.1rem; font-weight: 800; color: var(--acc); line-height: 1; letter-spacing: .02em; }
+.counter-of { font-size: .55rem; color: var(--txt-m); letter-spacing: .1em; }
+.sync-dot-wrap { display: flex; align-items: center; gap: 5px; }
+.sync-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--txt-l); }
+.sync-dot.live { background: var(--green); animation: pulse-dot 2.4s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sync-lbl { font-size: .44rem; color: var(--txt-l); letter-spacing: .14em; text-transform: uppercase; }
+
+/* ── TABS ── */
+.tabs {
+  position: fixed; top: var(--bar-h); left: 0; right: 0; z-index: 99;
+  height: var(--tab-h); background: var(--s2); border-bottom: 1px solid var(--bdr); display: flex;
+}
+.tab {
+  flex: 1; height: 100%; border: none; background: transparent;
+  font-family: var(--font); font-size: .58rem; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--txt-l);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+  border-bottom: 2px solid transparent; transition: color .2s, border-color .2s, background .2s;
+}
+.tab.active { color: var(--acc); border-bottom-color: var(--acc); background: var(--acc-d); }
+.tab-icon { font-size: .9rem; line-height: 1; }
+
+/* ── PANES ── */
+.pane {
+  position: fixed; top: calc(var(--bar-h) + var(--tab-h));
+  left: 0; right: 0; bottom: 0;
+  overflow-y: auto; -webkit-overflow-scrolling: touch; display: none;
+}
+.pane.active { display: block; }
+#pane-scanner { display: none; flex-direction: column; align-items: center; padding: 14px 14px 80px; gap: 10px; }
+#pane-scanner.active { display: flex; }
+
+/* ── CAMERA ── */
+.cam-frame { width: 100%; max-width: 300px; flex-shrink: 0; border: 1px solid var(--bdr2); position: relative; background: #000; overflow: hidden; }
+.cam-corner { position: absolute; width: 18px; height: 18px; z-index: 5; pointer-events: none; }
+.cc-tl { top: 5px; left: 5px; border-top: 2px solid var(--acc); border-left: 2px solid var(--acc); }
+.cc-tr { top: 5px; right: 5px; border-top: 2px solid var(--acc); border-right: 2px solid var(--acc); }
+.cc-bl { bottom: 5px; left: 5px; border-bottom: 2px solid var(--acc); border-left: 2px solid var(--acc); }
+.cc-br { bottom: 5px; right: 5px; border-bottom: 2px solid var(--acc); border-right: 2px solid var(--acc); }
+#reader { width: 100%; background: #000; }
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--acc), transparent);
+  animation: scanmove 2s ease-in-out infinite;
+  z-index: 4; pointer-events: none; display: none; box-shadow: 0 0 8px var(--acc);
+}
+@keyframes scanmove { 0%{top:6%} 100%{top:92%} }
+
+/* ── NOTICE ── */
+.req-notice {
+  width: 100%; max-width: 300px; flex-shrink: 0;
+  background: var(--amber-d); border: 1px solid rgba(251,191,36,.2);
+  border-left: 3px solid var(--amber);
+  padding: 8px 12px; font-size: .56rem; color: rgba(251,191,36,.75);
+  letter-spacing: .06em; text-transform: uppercase; line-height: 1.7;
+}
+.req-notice strong { color: var(--amber); }
+
+/* ── BTN CAM ── */
+.btn-cam {
+  width: 100%; max-width: 300px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  background: transparent; border: 1px solid var(--bdr2); padding: 11px; color: var(--txt-m);
+  font-family: var(--font); font-size: .6rem; letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer; transition: all .2s;
+}
+.btn-cam:hover, .btn-cam.active { background: var(--acc-d); border-color: var(--acc-b); color: var(--acc); }
+.rec-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bdr2); transition: background .3s; flex-shrink: 0; }
+.btn-cam.active .rec-dot { background: #f87171; animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── COOLDOWN ── */
+.cooldown-bar { width: 100%; max-width: 300px; height: 1px; background: var(--bdr); overflow: hidden; flex-shrink: 0; }
+.cooldown-fill { height: 100%; background: var(--acc); width: 0%; transition: width .05s linear; }
+
+/* ── STATUS CARD ── */
+.status-card {
+  width: 100%; max-width: 300px; flex-shrink: 0;
+  padding: 14px 16px; background: var(--s1); border: 1px solid var(--bdr);
+  border-left: 3px solid var(--bdr2); transition: border-color .2s, background .2s, border-left-color .2s; min-height: 72px;
+}
+.status-card.ok   { border-left-color: var(--green); background: var(--green-d); border-color: rgba(110,231,160,.18); }
+.status-card.err  { border-left-color: var(--red);   background: var(--red-d);   border-color: rgba(244,164,164,.18); }
+.status-card.warn { border-left-color: var(--amber);  background: var(--amber-d); border-color: rgba(251,191,36,.18); }
+.status-idle { color: var(--txt-l); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; text-align: center; padding: 8px 0; }
+.status-name { font-family: var(--head); font-size: 1rem; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-bottom: 2px; }
+.status-email { font-size: .58rem; color: var(--txt-m); margin-bottom: 9px; word-break: break-all; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; font-size: .58rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; border: 1px solid; }
+.status-badge.ok   { background: rgba(110,231,160,.1); border-color: rgba(110,231,160,.3); color: var(--green); }
+.status-badge.err  { background: rgba(244,164,164,.1); border-color: rgba(244,164,164,.3); color: var(--red); }
+.status-badge.warn { background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.3);  color: var(--amber); }
+.status-meta { font-size: .56rem; color: var(--txt-l); margin-top: 7px; letter-spacing: .06em; line-height: 1.6; }
+
+/* ── GROUP PICKER ── */
+.group-picker {
+  width: 100%; max-width: 300px; flex-shrink: 0;
+  background: var(--s1); border: 1px solid rgba(125,211,168,.25);
+  border-top: 2px solid var(--acc); display: none; overflow: hidden;
+}
+.group-picker.visible { display: block; animation: slide-in .2s var(--ease); }
+@keyframes slide-in { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+.picker-header { padding: 10px 14px 8px; border-bottom: 1px solid var(--bdr); }
+.picker-label { font-size: .54rem; color: var(--acc); letter-spacing: .16em; text-transform: uppercase; }
+.picker-name { font-family: var(--head); font-size: .88rem; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-top: 2px; }
+
+.member-list {
+  padding: 8px 14px; border-bottom: 1px solid var(--bdr);
+  display: flex; flex-direction: column; gap: 5px; max-height: 140px; overflow-y: auto;
+}
+.member-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; background: var(--s2); border: 1px solid var(--bdr);
+}
+.member-seat {
+  font-size: .55rem; font-weight: 500; color: var(--acc);
+  letter-spacing: .1em; text-transform: uppercase; flex-shrink: 0;
+  background: var(--acc-d); border: 1px solid var(--acc-b); padding: 2px 7px;
+}
+.member-name { font-size: .68rem; color: var(--txt); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
+.member-status {
+  font-size: .52rem; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 7px; border: 1px solid; flex-shrink: 0;
+}
+.member-status.served { color: var(--green); border-color: rgba(110,231,160,.3); background: rgba(110,231,160,.07); }
+.member-status.pending { color: var(--txt-l); border-color: var(--bdr); background: transparent; }
+
+.picker-qty { padding: 10px 14px; border-bottom: 1px solid var(--bdr); display: flex; align-items: center; gap: 8px; }
+.qty-lbl { font-size: .54rem; color: var(--txt-l); letter-spacing: .1em; flex: 1; }
+.qty-btn {
+  width: 30px; height: 30px; background: var(--s2); border: 1px solid var(--bdr2);
+  color: var(--txt); font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s; flex-shrink: 0; font-family: var(--font);
+}
+.qty-btn:hover { background: var(--acc-d); border-color: var(--acc-b); color: var(--acc); }
+.qty-num { font-family: var(--head); font-size: 1.3rem; font-weight: 800; color: var(--acc); min-width: 28px; text-align: center; }
+
+.picker-actions { display: flex; gap: 8px; padding: 10px 14px; }
+.btn-cancel-pick {
+  background: transparent; border: 1px solid var(--bdr2); padding: 9px 14px; color: var(--txt-m);
+  font-family: var(--font); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; transition: background .15s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-cancel-pick:hover { background: var(--s3); }
+.btn-confirm-pick {
+  flex: 1; background: var(--acc); color: #000; border: none;
+  padding: 9px; font-family: var(--head); font-size: .72rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: background .2s;
+}
+.btn-confirm-pick:hover { background: #9de4be; }
+
+/* ── MANUAL ── */
+.manual-wrap { width: 100%; max-width: 300px; display: flex; gap: 6px; flex-shrink: 0; }
+.manual-input {
+  flex: 1; background: var(--s1); border: 1px solid var(--bdr2); padding: 10px 12px;
+  color: var(--txt); font-family: var(--font); font-size: .72rem;
+  outline: none; transition: border-color .2s; min-width: 0;
+}
+.manual-input:focus { border-color: var(--acc); }
+.manual-input::placeholder { color: var(--txt-l); }
+.btn-manual {
+  background: var(--acc); color: #000; border: none;
+  padding: 10px 14px; font-family: var(--head); font-size: .7rem; font-weight: 800;
+  letter-spacing: .06em; cursor: pointer; transition: background .2s; flex-shrink: 0;
+}
+.btn-manual:hover { background: #9de4be; }
+
+/* ── ROSTER ── */
+#pane-roster { padding: 10px 10px 80px; }
+.roster-search-wrap {
+  display: flex; align-items: center; gap: 8px; background: var(--s1); border: 1px solid var(--bdr);
+  padding: 10px 12px; margin-bottom: 10px; position: sticky; top: 0; z-index: 10;
+}
+.roster-search-wrap input { flex: 1; background: transparent; border: none; outline: none; font-family: var(--font); font-size: .72rem; color: var(--txt); }
+.roster-search-wrap input::placeholder { color: var(--txt-l); }
+.roster-stats { display: flex; gap: 6px; margin-bottom: 10px; }
+.roster-stat {
+  flex: 1; background: var(--s1); border: 1px solid var(--bdr);
+  border-top: 2px solid var(--acc); padding: 8px 10px;
+  font-size: .52rem; color: var(--txt-l); letter-spacing: .1em; text-transform: uppercase;
+}
+.roster-stat strong { display: block; font-family: var(--head); font-size: .95rem; font-weight: 800; color: var(--acc); margin-bottom: 1px; }
+.attendee-row {
+  background: var(--s1); border: 1px solid var(--bdr);
+  border-left: 3px solid var(--bdr);
+  padding: 10px 12px; margin-bottom: 5px;
+  display: flex; align-items: center; gap: 10px;
+}
+.attendee-row.served  { border-left-color: var(--green); }
+.attendee-row.partial { border-left-color: var(--acc); }
+.attendee-row.blocked { opacity: .38; }
+.att-info { flex: 1; min-width: 0; }
+.att-name  { font-family: var(--head); font-size: .8rem; font-weight: 800; color: var(--txt); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.att-email { font-size: .54rem; color: var(--txt-l); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.att-detail { font-size: .52rem; color: var(--txt-m); margin-top: 3px; letter-spacing: .04em; }
+.ml-tag { white-space: nowrap; padding: 4px 9px; flex-shrink: 0; font-size: .54rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; border: 1px solid; }
+.ml-tag.done    { color: var(--green); border-color: rgba(110,231,160,.25); background: rgba(110,231,160,.06); }
+.ml-tag.serve   { color: var(--acc); border-color: var(--acc-b); background: var(--acc-d); cursor: pointer; transition: background .15s; }
+.ml-tag.serve:hover { background: rgba(125,211,168,.2); }
+.ml-tag.part    { color: var(--amber); border-color: rgba(251,191,36,.25); background: rgba(251,191,36,.06); cursor: pointer; }
+.ml-tag.blocked { color: var(--txt-l); border-color: var(--bdr); background: transparent; }
+.roster-empty { text-align: center; padding: 44px; color: var(--txt-l); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
+
+/* ── SETTINGS ── */
+#pane-settings { padding: 14px; }
+.s-label { font-size: .52rem; color: var(--txt-l); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 7px; }
+.s-input {
+  width: 100%; background: var(--s1); border: 1px solid var(--bdr2);
+  padding: 10px 12px; color: var(--txt); font-family: var(--font); font-size: .7rem;
+  outline: none; margin-bottom: 8px; transition: border-color .2s;
+}
+.s-input:focus { border-color: var(--acc); }
+.s-input::placeholder { color: var(--txt-l); }
+.s-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.btn-save {
+  flex: 1; background: var(--acc); color: #000; border: none;
+  padding: 10px; font-family: var(--head); font-size: .68rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; cursor: pointer; transition: background .2s;
+}
+.btn-save:hover { background: #9de4be; }
+.btn-clear-set {
+  background: transparent; border: 1px solid var(--bdr2); padding: 10px 14px; color: var(--txt-m);
+  font-family: var(--font); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-clear-set:hover { background: var(--red-d); border-color: rgba(244,164,164,.3); color: var(--red); }
+.webhook-status { margin-top: 10px; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--txt-l); }
+.s-divider { border: none; border-top: 1px solid var(--bdr); margin: 16px 0; }
+.s-info { font-size: .56rem; color: var(--txt-l); line-height: 1.8; letter-spacing: .04em; }
+.s-info strong { color: var(--txt-m); }
+
+/* ── MEAL BURST ── */
+.burst-wrap { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; display: none; }
+.burst-wrap.on { display: block; }
+.meal-emoji { position: absolute; font-size: 2rem; line-height: 1; animation: mfall var(--md,1.8s) var(--mdd,0s) ease-in forwards; }
+@keyframes mfall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 85%{opacity:.8} 100%{transform:translateY(calc(100vh + 80px)) rotate(var(--mr,360deg));opacity:0} }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--s1); border: 1px solid var(--bdr2);
+  padding: 10px 20px; font-size: .64rem; color: var(--txt);
+  box-shadow: 0 8px 32px rgba(0,0,0,.6); z-index: 500;
+  transition: transform .3s var(--spring), opacity .3s; opacity: 0;
+  font-family: var(--font); letter-spacing: .1em; text-transform: uppercase;
+  max-width: calc(100vw - 32px); text-align: center;
+}
+.toast.on  { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.ok  { border-color: rgba(110,231,160,.4); color: var(--green); }
+.toast.err { border-color: rgba(244,164,164,.4); color: var(--red); }
+.toast.warn{ border-color: rgba(251,191,36,.4);  color: var(--amber); }
+
+/* ── LOADER ── */
+.loader { position: fixed; inset: 0; z-index: 300; background: rgba(8,8,8,.88); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.loader.on { display: flex; }
+.spin { width: 28px; height: 28px; border: 1px solid var(--bdr2); border-top-color: var(--acc); border-radius: 50%; animation: sp 1s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.loader-txt { font-size: .58rem; color: var(--txt-l); letter-spacing: .16em; text-transform: uppercase; }
+
+.section-line { width: 100%; max-width: 300px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.section-line::before, .section-line::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
+.section-line span { font-size: .48rem; color: var(--txt-l); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="burst-wrap" id="burst-wrap"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-r">Resound</div>
+    <div class="brand-sub">🍽️ Meal Station</div>
+  </div>
+  <div class="topbar-right">
+    <div class="counter-pill">
+      <div class="counter-n" id="counter-n">–</div>
+      <div class="counter-of">served</div>
+    </div>
+    <div class="sync-dot-wrap">
+      <div class="sync-dot" id="sync-dot"></div>
+      <div class="sync-lbl" id="sync-lbl">not synced</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="tab-scanner" onclick="switchTab('scanner')"><span class="tab-icon">📷</span> Scan</button>
+  <button class="tab" id="tab-roster"   onclick="switchTab('roster')"><span class="tab-icon">📋</span> Roster</button>
+  <button class="tab" id="tab-settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span> Setup</button>
+</div>
+
+<!-- SCANNER PANE -->
+<div class="pane active" id="pane-scanner">
+  <div class="cam-frame">
+    <div id="reader"></div>
+    <div class="scan-line" id="scan-line"></div>
+    <div class="cam-corner cc-tl"></div><div class="cam-corner cc-tr"></div>
+    <div class="cam-corner cc-bl"></div><div class="cam-corner cc-br"></div>
+  </div>
+
+  <button class="btn-cam" id="btn-cam" onclick="toggleCamera()">
+    <span class="rec-dot" id="rec-dot"></span>
+    <span id="cam-label">Start Camera</span>
+  </button>
+
+  <div class="cooldown-bar"><div class="cooldown-fill" id="cooldown-fill"></div></div>
+
+  <div class="req-notice">
+    <strong>Check-in required:</strong> Attendee must be checked in at the Main Door before receiving a meal.
+  </div>
+
+  <div class="status-card" id="status-card">
+    <div class="status-idle">Scan QR or enter email below</div>
+  </div>
+
+  <!-- Group picker with member list -->
+  <div class="group-picker" id="group-picker">
+    <div class="picker-header">
+      <div class="picker-label">Group Booking — Meals</div>
+      <div class="picker-name" id="picker-name">–</div>
+    </div>
+    <div class="member-list" id="member-list"></div>
+    <div class="picker-qty">
+      <div class="qty-lbl">Serving</div>
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <div class="qty-num" id="qty-num">1</div>
+      <div style="font-size:.54rem;color:var(--txt-l);letter-spacing:.08em" id="qty-of-lbl">of – remaining</div>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+    </div>
+    <div class="picker-actions">
+      <button class="btn-cancel-pick" onclick="cancelQty()">Cancel</button>
+      <button class="btn-confirm-pick" id="btn-confirm" onclick="confirmQty()">Serve Meal →</button>
+    </div>
+  </div>
+
+  <div class="section-line"><span>or enter email</span></div>
+
+  <div class="manual-wrap">
+    <input class="manual-input" type="email" id="manual-email" placeholder="attendee@email.com" autocomplete="off" autocapitalize="off" autocorrect="off">
+    <button class="btn-manual" onclick="manualServe()">→</button>
+  </div>
+</div>
+
+<!-- ROSTER PANE -->
+<div class="pane" id="pane-roster">
+  <div class="roster-search-wrap">
+    <span style="font-size:.8rem;color:var(--txt-l)">◎</span>
+    <input type="search" id="roster-search" placeholder="Search name or email…" oninput="filterRoster()" autocomplete="off" autocapitalize="off">
+  </div>
+  <div class="roster-stats">
+    <div class="roster-stat"><strong id="stat-total">–</strong>Registered</div>
+    <div class="roster-stat"><strong id="stat-served">–</strong>Served</div>
+    <div class="roster-stat"><strong id="stat-eligible">–</strong>Eligible</div>
+  </div>
+  <div id="roster-list"><div class="roster-empty">Loading roster…</div></div>
+</div>
+
+<!-- SETTINGS PANE -->
+<div class="pane" id="pane-settings">
+  <div class="s-label">Webhook URL</div>
+  <input class="s-input" type="url" id="webhook-input" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <div class="s-row">
+    <button class="btn-save" onclick="saveWebhook()">Save &amp; Test →</button>
+    <button class="btn-clear-set" onclick="clearWebhook()">Clear</button>
+  </div>
+  <div class="webhook-status" id="webhook-status"></div>
+  <hr class="s-divider">
+  <div class="s-info">
+    <strong>Meal Station</strong> — tracks meal distribution per attendee.<br>
+    Attendee must be checked in at Main Door first.<br>
+    Use the same webhook URL as all other station scanners.<br>
+    Roster syncs every 30 s while connected.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loader" id="loader"><div class="spin"></div><div class="loader-txt" id="loader-txt">Processing…</div></div>
+
+<script>
+/* ── CONFIG ── */
+var WEBHOOK_URL = localStorage.getItem('rsnd_meal_webhook') || '';
+var COOLDOWN_MS = 2200;
+
+/* ── STATE ── */
+var rosterData    = [];
+var scanCooldown  = false;
+var cameraRunning = false;
+var html5QrCode   = null;
+var _toastTimer   = null;
+var _cooldownInt  = null;
+var _pollTimer    = null;
+var _pending      = null; // { email, attendee, remaining }
+var _qtyValue     = 1;
+var MEAL_EMOJIS   = ['🍽️','🥗','🍱','🥘','🍲'];
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded', function() {
+  if (WEBHOOK_URL) {
+    document.getElementById('webhook-input').value = WEBHOOK_URL;
+    loadRoster(true); startPoll();
+  } else {
+    switchTab('settings');
+    toast('Configure webhook URL to begin', 'warn');
+  }
+});
+
+/* ── POLL ── */
+function startPoll() { if (_pollTimer) clearInterval(_pollTimer); _pollTimer = setInterval(function() { loadRoster(false); }, 30000); }
+function stopPoll()  { if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; } }
+
+/* ── TABS ── */
+function switchTab(name) {
+  ['scanner','roster','settings'].forEach(function(t) {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.getElementById('pane-'+t).classList.toggle('active', t===name);
+  });
+  if (name === 'roster') filterRoster();
+  if (name !== 'scanner') safeStopCamera();
+}
+
+/* ── CAMERA ── */
+function toggleCamera() { cameraRunning ? safeStopCamera() : startCamera(); }
+function startCamera() {
+  if (!window.Html5Qrcode) { toast('QR library not loaded', 'err'); return; }
+  html5QrCode = new Html5Qrcode('reader');
+  Html5Qrcode.getCameras().then(function(devices) {
+    if (!devices || !devices.length) { toast('No camera found', 'err'); return; }
+    var cam = devices.find(function(d) { return /back|rear|environment/i.test(d.label); }) || devices[devices.length-1];
+    return html5QrCode.start(cam.id, {fps:10,qrbox:{width:220,height:220}},
+      function(text) { onScanResult(text); }, function() {});
+  }).then(function() {
+    cameraRunning = true;
+    document.getElementById('cam-label').textContent = 'Stop Camera';
+    document.getElementById('btn-cam').classList.add('active');
+    document.getElementById('scan-line').style.display = 'block';
+  }).catch(function(err) {
+    toast(/denied|NotAllowed/i.test(String(err)) ? 'Camera access denied' : 'Camera error', 'err');
+    html5QrCode = null;
+  });
+}
+function safeStopCamera() {
+  if (!html5QrCode) { cameraRunning = false; setCamIdle(); return; }
+  var ref = html5QrCode; html5QrCode = null;
+  ref.stop().catch(function(){}).finally(function() { cameraRunning = false; setCamIdle(); });
+}
+function setCamIdle() {
+  document.getElementById('cam-label').textContent = 'Start Camera';
+  document.getElementById('btn-cam').classList.remove('active');
+  document.getElementById('scan-line').style.display = 'none';
+}
+
+/* ── SCAN ── */
+function onScanResult(raw) {
+  if (scanCooldown) return;
+  var email = raw.trim().toLowerCase();
+  if (!isValidEmail(email)) { toast('Invalid QR – not an email', 'err'); return; }
+  startCooldown(); processMeal(email);
+}
+function startCooldown() {
+  scanCooldown = true;
+  var fill = document.getElementById('cooldown-fill'), start = Date.now();
+  fill.style.width = '100%'; clearInterval(_cooldownInt);
+  _cooldownInt = setInterval(function() {
+    var e = Date.now()-start, pct = Math.max(0,100-(e/COOLDOWN_MS*100));
+    fill.style.width = pct.toFixed(1)+'%';
+    if (e >= COOLDOWN_MS) { scanCooldown = false; fill.style.width = '0%'; clearInterval(_cooldownInt); }
+  }, 50);
+}
+
+/* ── MANUAL ── */
+function manualServe() {
+  var email = document.getElementById('manual-email').value.trim().toLowerCase();
+  if (!email || !isValidEmail(email)) { toast('Enter a valid email', 'err'); return; }
+  processMeal(email); document.getElementById('manual-email').value = '';
+}
+document.getElementById('manual-email').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') manualServe();
+});
+
+/* ── MEAL FLOW ── */
+function processMeal(email) {
+  if (!WEBHOOK_URL) { toast('No webhook configured', 'err'); return; }
+  var attendee = rosterData.find(function(a) { return a.email === email; });
+
+  if (!attendee) { sendMeal(email, 1); return; }
+
+  if (!attendee.checkedIn) {
+    setStatusCard({ type:'err', name:attendee.name, email:email,
+      badge:'Not checked in at Main Door', badgeType:'err',
+      meta:'This person must check in at the door first.' });
+    vibrate([200]); toast('Must check in at Main Door first', 'err'); return;
+  }
+
+  var remaining = attendee.totalSeats - attendee.mealsGiven;
+  if (remaining <= 0) {
+    setStatusCard({ type:'warn', name:attendee.name, email:email,
+      badge:'Meal already served', badgeType:'warn',
+      meta:'All ' + attendee.totalSeats + ' meal(s) distributed.' });
+    vibrate([100,50,100]); toast('Meal already served', 'warn'); return;
+  }
+
+  if (remaining === 1 && attendee.totalSeats === 1) { sendMeal(email, 1); return; }
+
+  showGroupPicker(email, attendee, remaining);
+}
+
+/* ── GROUP PICKER ── */
+function buildMemberList(attendee, remaining) {
+  var list = document.getElementById('member-list'); list.innerHTML = '';
+  var total = attendee.totalSeats, given = attendee.mealsGiven;
+  for (var i = 0; i < total; i++) {
+    var hasServed = i < given;
+    var row = document.createElement('div'); row.className = 'member-row';
+    var nameLabel = i === 0 ? attendee.name : 'Group Member ' + (i+1);
+    row.innerHTML =
+      '<div class="member-seat">Seat ' + (i+1) + '</div>' +
+      '<div class="member-name">' + esc(nameLabel) + '</div>' +
+      '<div class="member-status ' + (hasServed ? 'served' : 'pending') + '">' +
+        (hasServed ? '✓ Served' : 'Pending') +
+      '</div>';
+    list.appendChild(row);
+  }
+}
+
+function showGroupPicker(email, attendee, remaining) {
+  _pending = { email:email, attendee:attendee, remaining:remaining };
+  _qtyValue = remaining;
+  document.getElementById('picker-name').textContent = attendee.name.toUpperCase();
+  document.getElementById('qty-num').textContent = remaining;
+  document.getElementById('qty-of-lbl').textContent = 'of ' + remaining + ' remaining';
+  buildMemberList(attendee, remaining);
+  document.getElementById('group-picker').classList.add('visible');
+  document.getElementById('btn-confirm').focus();
+}
+
+function changeQty(d) {
+  if (!_pending) return;
+  _qtyValue = Math.max(1, Math.min(_pending.remaining, _qtyValue + d));
+  document.getElementById('qty-num').textContent = _qtyValue;
+}
+function cancelQty() { _pending = null; _qtyValue = 1; document.getElementById('group-picker').classList.remove('visible'); }
+function confirmQty() { if (!_pending) return; var e=_pending.email, q=_qtyValue; cancelQty(); sendMeal(e,q); }
+
+function sendMeal(email, quantity) {
+  setLoading(true, 'Serving meal(s)…');
+  apiPost({ action:'checkMeal', email:email, quantity:quantity }, function(res) {
+    setLoading(false);
+    if (res.success) {
+      setStatusCard({ type:'ok', name:res.name||email, email:email,
+        badge:'Served  ' + res.given + ' / ' + res.totalSeats, badgeType:'ok',
+        meta: res.given < res.totalSeats
+          ? (res.totalSeats - res.given) + ' meal(s) still to serve'
+          : 'Full group served ✓' });
+      toast('🍽️ ' + (res.name||email), 'ok');
+      vibrate([60]); launchBurst(); loadRoster(false);
+    } else {
+      setStatusCard({ type:'err', name:email, email:'', badge:'Rejected', badgeType:'err', meta:res.error||'Could not serve meal' });
+      toast(res.error||'Failed', 'err'); vibrate([200]);
+    }
+  });
+}
+
+/* ── STATUS CARD ── */
+function setStatusCard(opts) {
+  var card = document.getElementById('status-card');
+  card.className = 'status-card ' + (opts.type||'');
+  card.innerHTML =
+    '<div class="status-name">' + esc(opts.name) + '</div>' +
+    (opts.email ? '<div class="status-email">' + esc(opts.email) + '</div>' : '') +
+    '<span class="status-badge ' + (opts.badgeType||'') + '">' + esc(opts.badge) + '</span>' +
+    (opts.meta ? '<div class="status-meta">' + esc(opts.meta) + '</div>' : '');
+}
+
+/* ── ROSTER ── */
+function loadRoster(showLoader) {
+  if (!WEBHOOK_URL) return;
+  if (showLoader) setLoading(true, 'Loading roster…');
+  apiPost({ action:'getRoster' }, function(res) {
+    if (showLoader) setLoading(false);
+    if (!res.success) { if (showLoader) toast('Failed to load roster','err'); return; }
+    rosterData = (res.roster||[]).map(function(a) {
+      var raw = a.checkedIn;
+      a.checkedIn = raw===true||raw===1||(typeof raw==='string'&&raw.length>0&&raw.toLowerCase()!=='false'&&raw!=='0');
+      return a;
+    });
+    var now = new Date();
+    document.getElementById('sync-dot').classList.add('live');
+    document.getElementById('sync-lbl').textContent =
+      'synced ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    document.getElementById('counter-n').textContent = res.totalMeals !== undefined ? res.totalMeals : '–';
+    updateStats(res); filterRoster();
+  });
+}
+
+function updateStats(res) {
+  var total    = rosterData.length;
+  var eligible = rosterData.filter(function(a){return a.checkedIn && a.mealsGiven < a.totalSeats;}).length;
+  document.getElementById('stat-total').textContent   = total;
+  document.getElementById('stat-served').textContent  = res.totalMeals !== undefined ? res.totalMeals : '–';
+  document.getElementById('stat-eligible').textContent = eligible;
+}
+
+function filterRoster() {
+  var q = (document.getElementById('roster-search').value||'').toLowerCase().trim();
+  var f = q ? rosterData.filter(function(a){return a.name.toLowerCase().indexOf(q)>=0||a.email.toLowerCase().indexOf(q)>=0;}) : rosterData;
+  renderRoster(f);
+}
+
+function renderRoster(list) {
+  var el = document.getElementById('roster-list');
+  if (!list||!list.length) {
+    el.innerHTML = '<div class="roster-empty">' + (rosterData.length===0 ? 'No data — check webhook in Setup' : 'No results') + '</div>';
+    return;
+  }
+  // Sort: eligible (checked in, not fully served) → not checked in → fully served
+  var sorted = list.slice().sort(function(a,b) {
+    var ap = a.mealsGiven >= a.totalSeats ? 2 : a.checkedIn ? 0 : 1;
+    var bp = b.mealsGiven >= b.totalSeats ? 2 : b.checkedIn ? 0 : 1;
+    return ap - bp;
+  });
+  el.innerHTML = sorted.map(function(a) {
+    var full    = a.mealsGiven >= a.totalSeats;
+    var partial = a.mealsGiven > 0 && !full;
+    var rowCls  = full ? 'attendee-row served' : partial ? 'attendee-row partial' : !a.checkedIn ? 'attendee-row blocked' : 'attendee-row';
+    var tagCls, tagTxt, onclick;
+    if (full)          { tagCls='ml-tag done';    tagTxt='✓ Served';   onclick=''; }
+    else if (!a.checkedIn){ tagCls='ml-tag blocked'; tagTxt='Not in yet'; onclick=''; }
+    else if (partial)  { tagCls='ml-tag part';    tagTxt=a.mealsGiven+'/'+a.totalSeats+' · Serve'; onclick='onclick="rosterServe(\''+escAttr(a.email)+'\')"'; }
+    else               { tagCls='ml-tag serve';   tagTxt='Serve';      onclick='onclick="rosterServe(\''+escAttr(a.email)+'\')"'; }
+    var detail = a.checkedIn
+      ? (full ? 'All meals served' : a.mealsGiven + ' served, ' + (a.totalSeats-a.mealsGiven) + ' remaining')
+      : 'Not checked in at main door';
+    return '<div class="'+rowCls+'">'+
+      '<div class="att-info">'+
+        '<div class="att-name">'  + esc(a.name)  + '</div>'+
+        '<div class="att-email">' + esc(a.email) + '</div>'+
+        '<div class="att-detail">' + a.totalSeats + ' seat(s) · ' + detail + '</div>'+
+      '</div>'+
+      '<span class="'+tagCls+'" '+onclick+'>'+tagTxt+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function rosterServe(email) { switchTab('scanner'); setTimeout(function(){processMeal(email);}, 120); }
+
+/* ── SETTINGS ── */
+function saveWebhook() {
+  var url = document.getElementById('webhook-input').value.trim();
+  if (!url) { toast('Enter a webhook URL','err'); return; }
+  WEBHOOK_URL = url; localStorage.setItem('rsnd_meal_webhook', url);
+  var s = document.getElementById('webhook-status'); s.style.color='var(--txt-l)'; s.textContent='Testing…';
+  apiPost({action:'getRoster'}, function(res) {
+    if (res.success) {
+      s.style.color='var(--green)';
+      s.textContent='✓ Connected — ' + (res.roster||[]).length + ' attendee(s)';
+      toast('Connected!','ok');
+      rosterData = res.roster||[];
+      document.getElementById('counter-n').textContent = res.totalMeals!==undefined ? res.totalMeals : '–';
+      filterRoster(); startPoll();
+    } else {
+      s.style.color='var(--red)';
+      s.textContent='✗ ' + (res.error||'Connection failed');
+      toast('Connection failed','err');
+    }
+  });
+}
+function clearWebhook() {
+  WEBHOOK_URL=''; localStorage.removeItem('rsnd_meal_webhook');
+  document.getElementById('webhook-input').value=''; document.getElementById('webhook-status').textContent='';
+  stopPoll(); rosterData=[]; renderRoster([]);
+  document.getElementById('counter-n').textContent='–';
+  document.getElementById('sync-dot').classList.remove('live');
+  toast('Webhook cleared','warn');
+}
+
+/* ── BURST ANIMATION ── */
+function launchBurst() {
+  var wrap = document.getElementById('burst-wrap'); wrap.innerHTML=''; wrap.classList.add('on');
+  for (var i=0; i<18; i++) {
+    var el = document.createElement('div'); el.className='meal-emoji';
+    el.textContent = MEAL_EMOJIS[Math.floor(Math.random()*MEAL_EMOJIS.length)];
+    var dur = (1.0+Math.random()*1.1).toFixed(2)+'s';
+    var del = (Math.random()*.55).toFixed(2)+'s';
+    var rot = (Math.random()>.5?1:-1)*(180+Math.floor(Math.random()*360))+'deg';
+    el.style.setProperty('--md', dur);
+    el.style.setProperty('--mdd', del);
+    el.style.setProperty('--mr', rot);
+    el.style.top = '-60px';
+    el.style.left = (2+Math.random()*92).toFixed(1)+'%';
+    wrap.appendChild(el);
+  }
+  setTimeout(function(){ wrap.innerHTML=''; wrap.classList.remove('on'); }, 3000);
+}
+
+/* ── API ── */
+function apiPost(body, cb) {
+  if (!WEBHOOK_URL) { cb({success:false,error:'No webhook URL'}); return; }
+  fetch(WEBHOOK_URL, {method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),mode:'cors'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){ cb(d); })
+    .catch(function(err){ setLoading(false); toast('Network error','err'); cb({success:false,error:String(err)}); });
+}
+
+/* ── HELPERS ── */
+function isValidEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+function vibrate(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch(e){} }
+function setLoading(on, msg) {
+  var el = document.getElementById('loader');
+  if (on) { document.getElementById('loader-txt').textContent = msg||'Processing…'; el.classList.add('on'); }
+  else { el.classList.remove('on'); }
+}
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast'+(type?' '+type:''); t.classList.add('on');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 3400);
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

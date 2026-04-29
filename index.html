@@ -3,784 +3,798 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Resound · Meal</title>
+<title>Resound — Meal</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --acc:     #7DD3A8;  /* soft mint / food green */
-  --acc-d:   rgba(125,211,168,.1);
-  --acc-b:   rgba(125,211,168,.22);
-  --green:   #6EE7A0;
-  --green-d: rgba(110,231,160,.08);
-  --red:     #F4A4A4;
-  --red-d:   rgba(244,164,164,.08);
-  --amber:   #FBBF24;
-  --amber-d: rgba(251,191,36,.08);
-  --bg:      #080808;
-  --s1:      #111113;
-  --s2:      #0D0D0F;
-  --s3:      #191920;
-  --bdr:     rgba(255,255,255,.07);
-  --bdr2:    rgba(255,255,255,.12);
-  --txt:     #F0EEE8;
-  --txt-m:   rgba(240,238,232,.45);
-  --txt-l:   rgba(240,238,232,.22);
-  --font:    'DM Mono', monospace;
-  --head:    'Syne', sans-serif;
-  --ease:    cubic-bezier(.4,0,.2,1);
-  --spring:  cubic-bezier(.22,.68,0,1.2);
-  --bar-h:   62px;
-  --tab-h:   46px;
+:root{
+  --bg:#05050a;--s1:#0c0c14;--s2:#11111c;--s3:#181826;
+  --blue:#3b82f6;--blue-b:#60a5fa;--blue-d:rgba(59,130,246,.08);--blue-bd:rgba(59,130,246,.18);
+  --white:#f1f5f9;--text:#cbd5e1;--mid:rgba(203,213,225,.45);--lo:rgba(203,213,225,.2);
+  --border:rgba(255,255,255,.05);--border2:rgba(255,255,255,.09);
+  --green:#22c55e;--green-d:rgba(34,197,94,.07);
+  --red:#ef4444;--red-d:rgba(239,68,68,.07);
+  --yellow:#f59e0b;--yellow-d:rgba(245,158,11,.07);
+  --orange:#f97316;
+  --accent:#f97316;--accent-b:#fb923c;--accent-d:rgba(249,115,22,.08);--accent-bd:rgba(249,115,22,.18);--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+  --th:58px;--tabs:40px;--ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.22,.68,0,1.2);
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%; font-family: var(--font);
-  background: var(--bg); color: var(--txt);
-  overflow: hidden; -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
-}
-
-/* ── TOPBAR ── */
-.topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  height: var(--bar-h);
-  background: var(--s2); border-bottom: 1px solid var(--bdr);
-  display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-}
-.brand { display: flex; flex-direction: column; gap: 2px; }
-.brand-r { font-family: var(--head); font-size: .78rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--acc); }
-.brand-sub { font-size: .48rem; letter-spacing: .2em; text-transform: uppercase; color: var(--txt-l); }
-
-.topbar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.counter-pill {
-  display: flex; align-items: baseline; gap: 5px;
-  background: var(--acc-d); border: 1px solid var(--acc-b); padding: 6px 12px;
-}
-.counter-n { font-family: var(--head); font-size: 1.1rem; font-weight: 800; color: var(--acc); line-height: 1; letter-spacing: .02em; }
-.counter-of { font-size: .55rem; color: var(--txt-m); letter-spacing: .1em; }
-.sync-dot-wrap { display: flex; align-items: center; gap: 5px; }
-.sync-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--txt-l); }
-.sync-dot.live { background: var(--green); animation: pulse-dot 2.4s ease-in-out infinite; }
-@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
-.sync-lbl { font-size: .44rem; color: var(--txt-l); letter-spacing: .14em; text-transform: uppercase; }
-
-/* ── TABS ── */
-.tabs {
-  position: fixed; top: var(--bar-h); left: 0; right: 0; z-index: 99;
-  height: var(--tab-h); background: var(--s2); border-bottom: 1px solid var(--bdr); display: flex;
-}
-.tab {
-  flex: 1; height: 100%; border: none; background: transparent;
-  font-family: var(--font); font-size: .58rem; font-weight: 500;
-  letter-spacing: .16em; text-transform: uppercase; color: var(--txt-l);
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
-  border-bottom: 2px solid transparent; transition: color .2s, border-color .2s, background .2s;
-}
-.tab.active { color: var(--acc); border-bottom-color: var(--acc); background: var(--acc-d); }
-.tab-icon { font-size: .9rem; line-height: 1; }
-
-/* ── PANES ── */
-.pane {
-  position: fixed; top: calc(var(--bar-h) + var(--tab-h));
-  left: 0; right: 0; bottom: 0;
-  overflow-y: auto; -webkit-overflow-scrolling: touch; display: none;
-}
-.pane.active { display: block; }
-#pane-scanner { display: none; flex-direction: column; align-items: center; padding: 14px 14px 80px; gap: 10px; }
-#pane-scanner.active { display: flex; }
-
-/* ── CAMERA ── */
-.cam-frame { width: 100%; max-width: 300px; flex-shrink: 0; border: 1px solid var(--bdr2); position: relative; background: #000; overflow: hidden; }
-.cam-corner { position: absolute; width: 18px; height: 18px; z-index: 5; pointer-events: none; }
-.cc-tl { top: 5px; left: 5px; border-top: 2px solid var(--acc); border-left: 2px solid var(--acc); }
-.cc-tr { top: 5px; right: 5px; border-top: 2px solid var(--acc); border-right: 2px solid var(--acc); }
-.cc-bl { bottom: 5px; left: 5px; border-bottom: 2px solid var(--acc); border-left: 2px solid var(--acc); }
-.cc-br { bottom: 5px; right: 5px; border-bottom: 2px solid var(--acc); border-right: 2px solid var(--acc); }
-#reader { width: 100%; background: #000; }
-.scan-line {
-  position: absolute; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--acc), transparent);
-  animation: scanmove 2s ease-in-out infinite;
-  z-index: 4; pointer-events: none; display: none; box-shadow: 0 0 8px var(--acc);
-}
-@keyframes scanmove { 0%{top:6%} 100%{top:92%} }
-
-/* ── NOTICE ── */
-.req-notice {
-  width: 100%; max-width: 300px; flex-shrink: 0;
-  background: var(--amber-d); border: 1px solid rgba(251,191,36,.2);
-  border-left: 3px solid var(--amber);
-  padding: 8px 12px; font-size: .56rem; color: rgba(251,191,36,.75);
-  letter-spacing: .06em; text-transform: uppercase; line-height: 1.7;
-}
-.req-notice strong { color: var(--amber); }
-
-/* ── BTN CAM ── */
-.btn-cam {
-  width: 100%; max-width: 300px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; gap: 9px;
-  background: transparent; border: 1px solid var(--bdr2); padding: 11px; color: var(--txt-m);
-  font-family: var(--font); font-size: .6rem; letter-spacing: .16em; text-transform: uppercase;
-  cursor: pointer; transition: all .2s;
-}
-.btn-cam:hover, .btn-cam.active { background: var(--acc-d); border-color: var(--acc-b); color: var(--acc); }
-.rec-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bdr2); transition: background .3s; flex-shrink: 0; }
-.btn-cam.active .rec-dot { background: #f87171; animation: blink 1.2s ease-in-out infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-/* ── COOLDOWN ── */
-.cooldown-bar { width: 100%; max-width: 300px; height: 1px; background: var(--bdr); overflow: hidden; flex-shrink: 0; }
-.cooldown-fill { height: 100%; background: var(--acc); width: 0%; transition: width .05s linear; }
-
-/* ── STATUS CARD ── */
-.status-card {
-  width: 100%; max-width: 300px; flex-shrink: 0;
-  padding: 14px 16px; background: var(--s1); border: 1px solid var(--bdr);
-  border-left: 3px solid var(--bdr2); transition: border-color .2s, background .2s, border-left-color .2s; min-height: 72px;
-}
-.status-card.ok   { border-left-color: var(--green); background: var(--green-d); border-color: rgba(110,231,160,.18); }
-.status-card.err  { border-left-color: var(--red);   background: var(--red-d);   border-color: rgba(244,164,164,.18); }
-.status-card.warn { border-left-color: var(--amber);  background: var(--amber-d); border-color: rgba(251,191,36,.18); }
-.status-idle { color: var(--txt-l); font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; text-align: center; padding: 8px 0; }
-.status-name { font-family: var(--head); font-size: 1rem; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-bottom: 2px; }
-.status-email { font-size: .58rem; color: var(--txt-m); margin-bottom: 9px; word-break: break-all; }
-.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; font-size: .58rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; border: 1px solid; }
-.status-badge.ok   { background: rgba(110,231,160,.1); border-color: rgba(110,231,160,.3); color: var(--green); }
-.status-badge.err  { background: rgba(244,164,164,.1); border-color: rgba(244,164,164,.3); color: var(--red); }
-.status-badge.warn { background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.3);  color: var(--amber); }
-.status-meta { font-size: .56rem; color: var(--txt-l); margin-top: 7px; letter-spacing: .06em; line-height: 1.6; }
-
-/* ── GROUP PICKER ── */
-.group-picker {
-  width: 100%; max-width: 300px; flex-shrink: 0;
-  background: var(--s1); border: 1px solid rgba(125,211,168,.25);
-  border-top: 2px solid var(--acc); display: none; overflow: hidden;
-}
-.group-picker.visible { display: block; animation: slide-in .2s var(--ease); }
-@keyframes slide-in { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
-
-.picker-header { padding: 10px 14px 8px; border-bottom: 1px solid var(--bdr); }
-.picker-label { font-size: .54rem; color: var(--acc); letter-spacing: .16em; text-transform: uppercase; }
-.picker-name { font-family: var(--head); font-size: .88rem; font-weight: 800; color: var(--txt); text-transform: uppercase; margin-top: 2px; }
-
-.member-list {
-  padding: 8px 14px; border-bottom: 1px solid var(--bdr);
-  display: flex; flex-direction: column; gap: 5px; max-height: 140px; overflow-y: auto;
-}
-.member-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 10px; background: var(--s2); border: 1px solid var(--bdr);
-}
-.member-seat {
-  font-size: .55rem; font-weight: 500; color: var(--acc);
-  letter-spacing: .1em; text-transform: uppercase; flex-shrink: 0;
-  background: var(--acc-d); border: 1px solid var(--acc-b); padding: 2px 7px;
-}
-.member-name { font-size: .68rem; color: var(--txt); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
-.member-status {
-  font-size: .52rem; letter-spacing: .08em; text-transform: uppercase;
-  padding: 2px 7px; border: 1px solid; flex-shrink: 0;
-}
-.member-status.served { color: var(--green); border-color: rgba(110,231,160,.3); background: rgba(110,231,160,.07); }
-.member-status.pending { color: var(--txt-l); border-color: var(--bdr); background: transparent; }
-
-.picker-qty { padding: 10px 14px; border-bottom: 1px solid var(--bdr); display: flex; align-items: center; gap: 8px; }
-.qty-lbl { font-size: .54rem; color: var(--txt-l); letter-spacing: .1em; flex: 1; }
-.qty-btn {
-  width: 30px; height: 30px; background: var(--s2); border: 1px solid var(--bdr2);
-  color: var(--txt); font-size: 1rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background .15s; flex-shrink: 0; font-family: var(--font);
-}
-.qty-btn:hover { background: var(--acc-d); border-color: var(--acc-b); color: var(--acc); }
-.qty-num { font-family: var(--head); font-size: 1.3rem; font-weight: 800; color: var(--acc); min-width: 28px; text-align: center; }
-
-.picker-actions { display: flex; gap: 8px; padding: 10px 14px; }
-.btn-cancel-pick {
-  background: transparent; border: 1px solid var(--bdr2); padding: 9px 14px; color: var(--txt-m);
-  font-family: var(--font); font-size: .58rem; letter-spacing: .1em; text-transform: uppercase;
-  cursor: pointer; transition: background .15s; white-space: nowrap; flex-shrink: 0;
-}
-.btn-cancel-pick:hover { background: var(--s3); }
-.btn-confirm-pick {
-  flex: 1; background: var(--acc); color: #000; border: none;
-  padding: 9px; font-family: var(--head); font-size: .72rem; font-weight: 800;
-  letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: background .2s;
-}
-.btn-confirm-pick:hover { background: #9de4be; }
-
-/* ── MANUAL ── */
-.manual-wrap { width: 100%; max-width: 300px; display: flex; gap: 6px; flex-shrink: 0; }
-.manual-input {
-  flex: 1; background: var(--s1); border: 1px solid var(--bdr2); padding: 10px 12px;
-  color: var(--txt); font-family: var(--font); font-size: .72rem;
-  outline: none; transition: border-color .2s; min-width: 0;
-}
-.manual-input:focus { border-color: var(--acc); }
-.manual-input::placeholder { color: var(--txt-l); }
-.btn-manual {
-  background: var(--acc); color: #000; border: none;
-  padding: 10px 14px; font-family: var(--head); font-size: .7rem; font-weight: 800;
-  letter-spacing: .06em; cursor: pointer; transition: background .2s; flex-shrink: 0;
-}
-.btn-manual:hover { background: #9de4be; }
-
-/* ── ROSTER ── */
-#pane-roster { padding: 10px 10px 80px; }
-.roster-search-wrap {
-  display: flex; align-items: center; gap: 8px; background: var(--s1); border: 1px solid var(--bdr);
-  padding: 10px 12px; margin-bottom: 10px; position: sticky; top: 0; z-index: 10;
-}
-.roster-search-wrap input { flex: 1; background: transparent; border: none; outline: none; font-family: var(--font); font-size: .72rem; color: var(--txt); }
-.roster-search-wrap input::placeholder { color: var(--txt-l); }
-.roster-stats { display: flex; gap: 6px; margin-bottom: 10px; }
-.roster-stat {
-  flex: 1; background: var(--s1); border: 1px solid var(--bdr);
-  border-top: 2px solid var(--acc); padding: 8px 10px;
-  font-size: .52rem; color: var(--txt-l); letter-spacing: .1em; text-transform: uppercase;
-}
-.roster-stat strong { display: block; font-family: var(--head); font-size: .95rem; font-weight: 800; color: var(--acc); margin-bottom: 1px; }
-.attendee-row {
-  background: var(--s1); border: 1px solid var(--bdr);
-  border-left: 3px solid var(--bdr);
-  padding: 10px 12px; margin-bottom: 5px;
-  display: flex; align-items: center; gap: 10px;
-}
-.attendee-row.served  { border-left-color: var(--green); }
-.attendee-row.partial { border-left-color: var(--acc); }
-.attendee-row.blocked { opacity: .38; }
-.att-info { flex: 1; min-width: 0; }
-.att-name  { font-family: var(--head); font-size: .8rem; font-weight: 800; color: var(--txt); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.att-email { font-size: .54rem; color: var(--txt-l); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.att-detail { font-size: .52rem; color: var(--txt-m); margin-top: 3px; letter-spacing: .04em; }
-.ml-tag { white-space: nowrap; padding: 4px 9px; flex-shrink: 0; font-size: .54rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; border: 1px solid; }
-.ml-tag.done    { color: var(--green); border-color: rgba(110,231,160,.25); background: rgba(110,231,160,.06); }
-.ml-tag.serve   { color: var(--acc); border-color: var(--acc-b); background: var(--acc-d); cursor: pointer; transition: background .15s; }
-.ml-tag.serve:hover { background: rgba(125,211,168,.2); }
-.ml-tag.part    { color: var(--amber); border-color: rgba(251,191,36,.25); background: rgba(251,191,36,.06); cursor: pointer; }
-.ml-tag.blocked { color: var(--txt-l); border-color: var(--bdr); background: transparent; }
-.roster-empty { text-align: center; padding: 44px; color: var(--txt-l); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; }
-
-/* ── SETTINGS ── */
-#pane-settings { padding: 14px; }
-.s-label { font-size: .52rem; color: var(--txt-l); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 7px; }
-.s-input {
-  width: 100%; background: var(--s1); border: 1px solid var(--bdr2);
-  padding: 10px 12px; color: var(--txt); font-family: var(--font); font-size: .7rem;
-  outline: none; margin-bottom: 8px; transition: border-color .2s;
-}
-.s-input:focus { border-color: var(--acc); }
-.s-input::placeholder { color: var(--txt-l); }
-.s-row { display: flex; gap: 8px; margin-bottom: 6px; }
-.btn-save {
-  flex: 1; background: var(--acc); color: #000; border: none;
-  padding: 10px; font-family: var(--head); font-size: .68rem; font-weight: 800;
-  letter-spacing: .12em; text-transform: uppercase; cursor: pointer; transition: background .2s;
-}
-.btn-save:hover { background: #9de4be; }
-.btn-clear-set {
-  background: transparent; border: 1px solid var(--bdr2); padding: 10px 14px; color: var(--txt-m);
-  font-family: var(--font); font-size: .58rem; letter-spacing: .08em; text-transform: uppercase;
-  cursor: pointer; transition: all .15s; white-space: nowrap;
-}
-.btn-clear-set:hover { background: var(--red-d); border-color: rgba(244,164,164,.3); color: var(--red); }
-.webhook-status { margin-top: 10px; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--txt-l); }
-.s-divider { border: none; border-top: 1px solid var(--bdr); margin: 16px 0; }
-.s-info { font-size: .56rem; color: var(--txt-l); line-height: 1.8; letter-spacing: .04em; }
-.s-info strong { color: var(--txt-m); }
-
-/* ── MEAL BURST ── */
-.burst-wrap { position: fixed; inset: 0; z-index: 400; pointer-events: none; overflow: hidden; display: none; }
-.burst-wrap.on { display: block; }
-.meal-emoji { position: absolute; font-size: 2rem; line-height: 1; animation: mfall var(--md,1.8s) var(--mdd,0s) ease-in forwards; }
-@keyframes mfall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 85%{opacity:.8} 100%{transform:translateY(calc(100vh + 80px)) rotate(var(--mr,360deg));opacity:0} }
-
-/* ── TOAST ── */
-.toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
-  background: var(--s1); border: 1px solid var(--bdr2);
-  padding: 10px 20px; font-size: .64rem; color: var(--txt);
-  box-shadow: 0 8px 32px rgba(0,0,0,.6); z-index: 500;
-  transition: transform .3s var(--spring), opacity .3s; opacity: 0;
-  font-family: var(--font); letter-spacing: .1em; text-transform: uppercase;
-  max-width: calc(100vw - 32px); text-align: center;
-}
-.toast.on  { transform: translateX(-50%) translateY(0); opacity: 1; }
-.toast.ok  { border-color: rgba(110,231,160,.4); color: var(--green); }
-.toast.err { border-color: rgba(244,164,164,.4); color: var(--red); }
-.toast.warn{ border-color: rgba(251,191,36,.4);  color: var(--amber); }
-
-/* ── LOADER ── */
-.loader { position: fixed; inset: 0; z-index: 300; background: rgba(8,8,8,.88); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-.loader.on { display: flex; }
-.spin { width: 28px; height: 28px; border: 1px solid var(--bdr2); border-top-color: var(--acc); border-radius: 50%; animation: sp 1s linear infinite; }
-@keyframes sp { to { transform: rotate(360deg); } }
-.loader-txt { font-size: .58rem; color: var(--txt-l); letter-spacing: .16em; text-transform: uppercase; }
-
-.section-line { width: 100%; max-width: 300px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.section-line::before, .section-line::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
-.section-line span { font-size: .48rem; color: var(--txt-l); letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(59,130,246,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.018) 1px,transparent 1px);background-size:48px 48px}
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--th);display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(5,5,10,.94);border-bottom:1px solid var(--border2);backdrop-filter:blur(24px)}
+.brand-name{font-size:.58rem;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--accent);font-family:var(--mono)}
+.brand-station{font-size:.88rem;font-weight:600;color:var(--white);letter-spacing:-.01em;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.net-pill{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-family:var(--mono);font-size:.55rem;letter-spacing:.06em;background:var(--s2);border:1px solid var(--border2);transition:all .3s}
+.net-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.net-pill.offline .net-dot{background:var(--red);animation:blink 1.4s ease infinite}
+.net-pill.offline{border-color:rgba(239,68,68,.25)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.net-txt{color:var(--mid);font-size:.55rem;letter-spacing:.06em;text-transform:uppercase}
+.counter-chip{display:flex;flex-direction:column;align-items:flex-end;background:var(--accent-d);border:1px solid var(--accent-bd);padding:4px 9px;border-radius:4px}
+.counter-v{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--accent-b);line-height:1}
+.counter-l{font-size:.44rem;color:var(--lo);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+/* TABS */
+.tabs{position:fixed;top:var(--th);left:0;right:0;z-index:99;height:var(--tabs);display:flex;background:rgba(5,5,10,.9);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+.tab{flex:1;height:100%;background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:.55rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--lo);border-bottom:2px solid transparent;transition:all .2s var(--ease);display:flex;align-items:center;justify-content:center;gap:4px}
+.tab.active{color:var(--accent-b);border-bottom-color:var(--accent);background:var(--accent-d)}
+/* PANES */
+.pane{position:fixed;top:calc(var(--th) + var(--tabs));left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+.pane.active{display:block}
+#pane-scan{display:none;flex-direction:column;align-items:center;padding:12px 12px 100px;gap:9px}
+#pane-scan.active{display:flex}
+/* STRIPS */
+.strip{width:100%;max-width:360px;flex-shrink:0;padding:7px 11px;display:none;align-items:center;gap:7px;border-radius:4px;font-family:var(--mono);font-size:.58rem;letter-spacing:.04em}
+.strip.on{display:flex}
+.s-offline{background:var(--red-d);border:1px solid rgba(239,68,68,.2);border-left:3px solid var(--red);color:rgba(239,68,68,.8)}
+.s-sync{background:var(--yellow-d);border:1px solid rgba(245,158,11,.2);border-left:3px solid var(--yellow);color:rgba(245,158,11,.9)}
+/* CAPACITY */
+.cap-card{width:100%;max-width:360px;flex-shrink:0;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:10px 12px}
+.cap-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cap-lbl{font-family:var(--mono);font-size:.52rem;color:var(--lo);letter-spacing:.12em;text-transform:uppercase}
+.cap-nums{font-family:var(--mono);font-size:.6rem;font-weight:600;color:var(--accent-b)}
+.cap-track{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.cap-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .6s var(--ease),background .4s}
+.cap-fill.warn{background:var(--yellow)}.cap-fill.crit{background:var(--red)}
+.cap-foot{display:flex;justify-content:space-between;margin-top:6px}
+.flow-lbl{font-family:var(--mono);font-size:.5rem;color:var(--lo)}
+.sync-lbl{font-family:var(--mono);font-size:.5rem;color:var(--lo)}
+/* SCAN FRAME */
+.scan-frame{width:100%;max-width:360px;flex-shrink:0;position:relative;overflow:hidden;background:#000;border:1px solid var(--accent-bd);border-radius:4px}
+.corner{position:absolute;width:14px;height:14px;z-index:5;pointer-events:none}
+.tl{top:6px;left:6px;border-top:2px solid var(--accent);border-left:2px solid var(--accent)}
+.tr{top:6px;right:6px;border-top:2px solid var(--accent);border-right:2px solid var(--accent)}
+.bl{bottom:6px;left:6px;border-bottom:2px solid var(--accent);border-left:2px solid var(--accent)}
+.br{bottom:6px;right:6px;border-bottom:2px solid var(--accent);border-right:2px solid var(--accent)}
+#reader{width:100%;background:#000}
+.scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 8px rgba(59,130,246,.4);animation:sl 2s ease-in-out infinite;z-index:4;pointer-events:none;display:none}
+@keyframes sl{0%{top:8%}100%{top:90%}}
+/* CAM BTN */
+.btn-cam{width:100%;max-width:360px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;border:1px solid var(--border2);padding:9px;cursor:pointer;font-family:var(--mono);font-size:.6rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);border-radius:4px;transition:all .2s}
+.btn-cam:hover,.btn-cam.active{background:var(--accent-d);border-color:var(--accent-bd);color:var(--accent-b)}
+.rec{width:6px;height:6px;border-radius:50%;background:var(--lo);flex-shrink:0;transition:background .3s}
+.btn-cam.active .rec{background:var(--red);animation:blink 1.2s ease infinite}
+/* COOLDOWN */
+.cd-bar{width:100%;max-width:360px;height:2px;background:var(--border);overflow:hidden;flex-shrink:0;border-radius:1px}
+.cd-fill{height:100%;background:var(--accent);width:0%}
+/* STATUS CARD */
+.status-card{width:100%;max-width:360px;flex-shrink:0;padding:12px 14px;background:var(--s2);border:1px solid var(--border);border-radius:6px;min-height:76px;transition:border-color .25s,background .25s}
+.status-card.ok{border-color:rgba(34,197,94,.3);background:var(--green-d)}
+.status-card.err{border-color:rgba(239,68,68,.3);background:var(--red-d)}
+.status-card.warn{border-color:rgba(245,158,11,.3);background:var(--yellow-d)}
+.s-idle{color:var(--lo);font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;text-align:center;padding:8px 0}
+.s-name{font-size:.92rem;font-weight:600;color:var(--white);margin-bottom:2px}
+.s-email{font-family:var(--mono);font-size:.58rem;color:var(--mid);margin-bottom:7px;word-break:break-all}
+.s-badge{display:inline-flex;align-items:center;padding:2px 8px;font-family:var(--mono);font-size:.56rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-radius:3px}
+.s-badge.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+.s-badge.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red)}
+.s-badge.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--yellow)}
+.s-meta{font-family:var(--mono);font-size:.56rem;color:var(--lo);margin-top:5px}
+.s-stn{font-family:var(--mono);font-size:.5rem;color:var(--lo);margin-top:3px;opacity:.6}
+/* UNDO BAR */
+.undo-bar{width:100%;max-width:360px;flex-shrink:0;background:var(--s3);border:1px solid var(--border2);padding:7px 11px;display:none;align-items:center;gap:8px;border-radius:4px}
+.undo-bar.on{display:flex}
+.undo-lbl{flex:1;font-family:var(--mono);font-size:.56rem;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.undo-track{width:32px;height:2px;background:var(--border2);border-radius:1px;overflow:hidden;flex-shrink:0}
+.undo-fill{height:100%;background:var(--accent-b);width:100%}
+.undo-timer{font-family:var(--mono);font-size:.56rem;color:var(--lo);min-width:20px;flex-shrink:0}
+.btn-undo{background:var(--accent-d);border:1px solid var(--accent-bd);padding:4px 10px;cursor:pointer;font-family:var(--mono);font-size:.56rem;font-weight:600;letter-spacing:.06em;color:var(--accent-b);border-radius:3px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.btn-undo:hover{background:rgba(59,130,246,.15)}
+/* GROUP PICKER */
+.group-picker{width:100%;max-width:360px;flex-shrink:0;background:var(--s2);border:1px solid rgba(245,158,11,.2);border-left:3px solid var(--yellow);border-radius:4px;display:none}
+.group-picker.visible{display:block}
+.gp-head{padding:10px 12px;border-bottom:1px solid var(--border)}
+.gp-title{font-family:var(--mono);font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow);margin-bottom:3px}
+.gp-name{font-size:.86rem;font-weight:600;color:var(--white)}
+.gp-list{padding:6px;display:flex;flex-direction:column;gap:4px}
+.gm{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .15s;background:var(--s1);user-select:none}
+.gm.selected{background:var(--accent-d);border-color:var(--accent-bd)}
+.gm.already-in{opacity:.38;cursor:default}
+.gm-chk{width:14px;height:14px;flex-shrink:0;border-radius:3px;border:1.5px solid var(--border2);background:var(--s3);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.gm.selected .gm-chk{border-color:var(--accent);background:var(--accent-d)}
+.chk-ico{display:none;width:8px;height:6px}
+.chk-ico polyline{fill:none;stroke:var(--accent-b);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gm.selected .chk-ico{display:block}
+.gm-info{flex:1;min-width:0}
+.gm-name{font-size:.78rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-seat{font-family:var(--mono);font-size:.56rem;color:var(--lo);margin-top:1px}
+.gm-tag{font-family:var(--mono);font-size:.5rem;color:var(--green);background:var(--green-d);border:1px solid rgba(34,197,94,.18);padding:2px 5px;border-radius:2px;flex-shrink:0}
+.gp-foot{padding:7px 8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.gp-count{flex:1;font-family:var(--mono);font-size:.56rem;color:var(--mid)}
+.btn-gp-x{background:none;border:1px solid var(--border2);padding:5px 10px;cursor:pointer;font-family:var(--mono);font-size:.56rem;color:var(--lo);border-radius:3px}
+.btn-gp-ok{background:var(--accent);border:none;padding:5px 12px;cursor:pointer;font-family:var(--mono);font-size:.58rem;font-weight:700;letter-spacing:.06em;color:#000;border-radius:3px;transition:background .15s}
+.btn-gp-ok:hover{background:var(--accent-b)}
+/* MANUAL */
+.manual-wrap{width:100%;max-width:360px;flex-shrink:0;display:flex;gap:6px}
+.manual-input{flex:1;background:var(--s2);border:1px solid var(--border);padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:.7rem;outline:none;min-width:0;border-radius:4px;transition:border-color .2s}
+.manual-input:focus{border-color:var(--accent-bd)}
+.manual-input::placeholder{color:var(--lo)}
+.btn-manual{background:var(--accent);color:#000;border:none;padding:9px 13px;cursor:pointer;font-family:var(--mono);font-size:.66rem;font-weight:700;border-radius:4px;transition:background .2s;flex-shrink:0}
+.btn-manual:hover{background:var(--accent-b)}
+/* ACTIVITY FEED */
+.feed{width:100%;max-width:360px;flex-shrink:0}
+.feed-title{font-family:var(--mono);font-size:.5rem;color:var(--lo);letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px;padding:0 2px}
+.feed-list{display:flex;flex-direction:column;gap:3px}
+.feed-item{display:flex;align-items:center;gap:7px;padding:6px 9px;background:var(--s2);border:1px solid var(--border);border-radius:3px;animation:fu .22s var(--ease) both}
+@keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.f-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.f-dot.ok{background:var(--green)}.f-dot.err{background:var(--red)}.f-dot.warn{background:var(--yellow)}
+.f-body{flex:1;min-width:0}
+.f-name{font-size:.7rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f-detail{font-family:var(--mono);font-size:.53rem;color:var(--lo);margin-top:1px}
+.f-time{font-family:var(--mono);font-size:.5rem;color:var(--lo);flex-shrink:0}
+/* ROSTER */
+#pane-roster{padding:10px 10px 80px}
+.search-row{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:8px 11px;margin-bottom:8px;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+.search-row input{flex:1;background:none;border:none;outline:none;font-family:var(--font);font-size:.78rem;color:var(--text)}
+.search-row input::placeholder{color:var(--lo)}
+.ftabs{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;padding-bottom:2px}
+.ftab{flex-shrink:0;padding:4px 11px;border-radius:20px;font-family:var(--mono);font-size:.54rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--border);background:var(--s2);color:var(--lo);cursor:pointer;transition:all .15s}
+.ftab.active{background:var(--accent-d);border-color:var(--accent-bd);color:var(--accent-b)}
+.r-stats{display:flex;gap:5px;margin-bottom:8px}
+.r-stat{flex:1;background:var(--s2);border:1px solid var(--border);border-top:2px solid var(--accent-bd);border-radius:4px;padding:7px 9px}
+.r-stat strong{display:block;font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--accent-b);margin-bottom:1px}
+.r-stat span{font-size:.52rem;color:var(--lo);letter-spacing:.08em;text-transform:uppercase}
+.r-empty,.r-loading{text-align:center;padding:36px;color:var(--lo);font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+.att-row{background:var(--s2);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:4px;padding:9px 11px;margin-bottom:4px;display:flex;align-items:center;gap:8px;transition:border-left-color .2s}
+.att-row.checked{border-left-color:var(--green)}
+.att-row.partial{border-left-color:var(--yellow)}
+.att-info{flex:1;min-width:0}
+.att-name{font-size:.78rem;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-email{font-family:var(--mono);font-size:.56rem;color:var(--lo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.att-meta{font-family:var(--mono);font-size:.52rem;color:var(--mid);margin-top:2px}
+.att-tag{padding:3px 8px;font-family:var(--mono);font-size:.52rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:3px;flex-shrink:0}
+.att-tag.done{color:var(--green);border:1px solid rgba(34,197,94,.2);background:var(--green-d)}
+.att-tag.none{color:var(--accent-b);border:1px solid var(--accent-bd);background:var(--accent-d);cursor:pointer;transition:background .15s}
+.att-tag.none:hover{background:rgba(59,130,246,.13)}
+.att-tag.part{color:var(--yellow);border:1px solid rgba(245,158,11,.2);background:var(--yellow-d);cursor:pointer}
+/* STATS PANE */
+#pane-stats{padding:10px 10px 80px}
+.stats-header{font-family:var(--mono);font-size:.52rem;color:var(--lo);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;padding:0 2px}
+.stat-station-card{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:8px;overflow:hidden;position:relative}
+.stat-station-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-station-card.door::before{background:var(--accent)}
+.stat-station-card.banana::before{background:var(--yellow)}
+.stat-station-card.meal::before{background:var(--orange)}
+.ssc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ssc-title{font-size:.82rem;font-weight:600;color:var(--white)}
+.ssc-pct{font-family:var(--mono);font-size:.7rem;font-weight:700}
+.ssc-pct.door{color:var(--accent-b)}
+.ssc-pct.banana{color:var(--yellow)}
+.ssc-pct.meal{color:var(--orange)}
+.ssc-track{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.ssc-fill{height:100%;border-radius:3px;transition:width .7s var(--ease)}
+.ssc-fill.door{background:var(--accent)}
+.ssc-fill.banana{background:var(--yellow)}
+.ssc-fill.meal{background:var(--orange)}
+.ssc-nums{display:flex;gap:8px;flex-wrap:wrap}
+.ssc-num{flex:1;min-width:70px;background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:7px 9px;text-align:center}
+.ssc-num-v{font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--white);display:block}
+.ssc-num-l{font-family:var(--mono);font-size:.48rem;color:var(--lo);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.divider-row{border:none;border-top:1px solid var(--border);margin:12px 0}
+.flow-card{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;margin-bottom:8px}
+.flow-card-title{font-family:var(--mono);font-size:.52rem;color:var(--lo);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}
+.flow-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.flow-row:last-child{margin-bottom:0}
+.flow-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.flow-dot.door{background:var(--accent)}
+.flow-dot.banana{background:var(--yellow)}
+.flow-dot.meal{background:var(--orange)}
+.flow-label{font-size:.7rem;color:var(--text);flex:1}
+.flow-val{font-family:var(--mono);font-size:.65rem;color:var(--mid)}
+.stats-refresh-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stats-refresh-lbl{font-family:var(--mono);font-size:.5rem;color:var(--lo);letter-spacing:.1em;text-transform:uppercase}
+.btn-stats-refresh{background:var(--accent-d);border:1px solid var(--accent-bd);padding:5px 12px;cursor:pointer;font-family:var(--mono);font-size:.56rem;font-weight:600;color:var(--accent-b);border-radius:3px;transition:all .15s}
+.btn-stats-refresh:hover{background:rgba(59,130,246,.14)}
+/* SETTINGS */
+#pane-settings{padding:13px}
+.set-section{margin-bottom:16px}
+.set-label{font-family:var(--mono);font-size:.54rem;color:var(--lo);letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+.set-input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:9px 11px;color:var(--text);font-family:var(--mono);font-size:.7rem;outline:none;margin-bottom:7px;transition:border-color .2s}
+.set-input:focus{border-color:var(--accent-bd)}
+.set-input::placeholder{color:var(--lo)}
+.set-row{display:flex;gap:6px}
+.btn-primary{flex:1;background:var(--accent);color:#000;border:none;border-radius:4px;padding:9px;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.btn-primary:hover{background:var(--accent-b)}
+.btn-ghost{background:none;border:1px solid var(--border2);border-radius:4px;padding:9px 12px;color:var(--lo);font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-ghost:hover{border-color:rgba(239,68,68,.35);color:var(--red)}
+.set-status{margin-top:7px;font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--lo)}
+.set-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.set-info{font-family:var(--mono);font-size:.56rem;color:var(--lo);line-height:1.9}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(5,5,10,.95);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}
+.modal-bg.on{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:8px;padding:24px 20px;width:100%;max-width:320px;animation:mi .3s var(--spring) both}
+@keyframes mi{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.modal-logo{font-family:var(--mono);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal-title{font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.modal-sub{font-family:var(--mono);font-size:.58rem;color:var(--lo);margin-bottom:16px;line-height:1.8}
+.modal-label{font-family:var(--mono);font-size:.54rem;color:var(--mid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.modal-input{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:4px;padding:10px 12px;color:var(--white);font-family:var(--font);font-size:.86rem;outline:none;margin-bottom:12px;transition:border-color .2s}
+.modal-input:focus{border-color:var(--accent)}
+.modal-input::placeholder{color:var(--lo)}
+.btn-modal{width:100%;background:var(--accent);color:#000;border:none;border-radius:4px;padding:11px;font-family:var(--mono);font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.btn-modal:hover{background:var(--accent-b)}
+/* TOAST / LOADER */
+.toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--s1);border:1px solid var(--border2);border-radius:6px;padding:8px 16px;font-family:var(--mono);font-size:.62rem;color:var(--text);letter-spacing:.04em;text-transform:uppercase;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:500;transition:transform .3s var(--spring),opacity .3s;opacity:0;max-width:calc(100vw - 24px);text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(34,197,94,.35);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,.35);color:var(--red)}
+.toast.warn{border-color:rgba(245,158,11,.35);color:var(--yellow)}
+.loader{position:fixed;inset:0;z-index:300;background:rgba(5,5,10,.82);display:none;flex-direction:column;align-items:center;justify-content:center;gap:11px;backdrop-filter:blur(4px)}
+.loader.on{display:flex}
+.spin{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loader-txt{font-family:var(--mono);font-size:.58rem;color:var(--lo);letter-spacing:.14em;text-transform:uppercase}
 </style>
 </head>
 <body>
-
-<div class="burst-wrap" id="burst-wrap"></div>
-
-<!-- TOP BAR -->
+<!-- ONBOARD MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-logo">Resound · Meal Setup</div>
+    <div class="modal-title">Name this station</div>
+    <div class="modal-sub">This name is logged with every scan so you can trace which device processed it.</div>
+    <div class="modal-label">Station name</div>
+    <input class="modal-input" id="m-stn" type="text" placeholder="e.g. Meal Station A…" autocomplete="off">
+    <div class="modal-label">Webhook URL</div>
+    <input class="modal-input" id="m-wh" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="btn-modal" onclick="onboardOK()">Confirm setup →</button>
+  </div>
+</div>
+<!-- TOPBAR -->
 <div class="topbar">
-  <div class="brand">
-    <div class="brand-r">Resound</div>
-    <div class="brand-sub">🍽️ Meal Station</div>
+  <div>
+    <div class="brand-name">Resound</div>
+    <div class="brand-station" id="stn-display">Meal Station</div>
   </div>
   <div class="topbar-right">
-    <div class="counter-pill">
-      <div class="counter-n" id="counter-n">–</div>
-      <div class="counter-of">served</div>
-    </div>
-    <div class="sync-dot-wrap">
-      <div class="sync-dot" id="sync-dot"></div>
-      <div class="sync-lbl" id="sync-lbl">not synced</div>
+    <div class="net-pill" id="net-pill"><div class="net-dot"></div><span class="net-txt" id="net-txt">Live</span></div>
+    <div class="counter-chip">
+      <div class="counter-v"><span id="cv">–</span></div>
+      <div class="counter-l">In / <span id="ct">–</span></div>
     </div>
   </div>
 </div>
-
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" id="tab-scanner" onclick="switchTab('scanner')"><span class="tab-icon">📷</span> Scan</button>
-  <button class="tab" id="tab-roster"   onclick="switchTab('roster')"><span class="tab-icon">📋</span> Roster</button>
-  <button class="tab" id="tab-settings" onclick="switchTab('settings')"><span class="tab-icon">⚙️</span> Setup</button>
+  <button class="tab active" id="tab-scan" onclick="sw('scan')">⬡ Scan</button>
+  <button class="tab" id="tab-roster" onclick="sw('roster')">≡ Roster</button>
+  <button class="tab" id="tab-stats" onclick="sw('stats')">◎ Stats</button>
+  <button class="tab" id="tab-settings" onclick="sw('settings')">◈ Setup</button>
 </div>
-
-<!-- SCANNER PANE -->
-<div class="pane active" id="pane-scanner">
-  <div class="cam-frame">
+<!-- SCAN PANE -->
+<div class="pane active" id="pane-scan">
+  <div class="strip s-offline" id="s-offline"><span>●</span><span>Offline — <strong id="qc">0</strong> scan(s) queued</span></div>
+  <div class="strip s-sync" id="s-sync"><span>↻</span><span id="sync-txt">Syncing…</span></div>
+  <div class="cap-card">
+    <div class="cap-head"><span class="cap-lbl">Meal — Progress</span><span class="cap-nums" id="cap-nums">– / –</span></div>
+    <div class="cap-track"><div class="cap-fill" id="cap-fill" style="width:0%"></div></div>
+    <div class="cap-foot"><span class="flow-lbl" id="flow-lbl">calculating…</span><span class="sync-lbl" id="sync-lbl">not synced</span></div>
+  </div>
+  <div class="scan-frame">
     <div id="reader"></div>
     <div class="scan-line" id="scan-line"></div>
-    <div class="cam-corner cc-tl"></div><div class="cam-corner cc-tr"></div>
-    <div class="cam-corner cc-bl"></div><div class="cam-corner cc-br"></div>
+    <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
   </div>
-
-  <button class="btn-cam" id="btn-cam" onclick="toggleCamera()">
-    <span class="rec-dot" id="rec-dot"></span>
-    <span id="cam-label">Start Camera</span>
+  <button class="btn-cam" id="btn-cam" onclick="toggleCam()">
+    <span class="rec" id="rec"></span><span id="cam-lbl">Start Camera</span>
   </button>
-
-  <div class="cooldown-bar"><div class="cooldown-fill" id="cooldown-fill"></div></div>
-
-  <div class="req-notice">
-    <strong>Check-in required:</strong> Attendee must be checked in at the Main Door before receiving a meal.
+  <div class="cd-bar"><div class="cd-fill" id="cd-fill"></div></div>
+  <div class="status-card" id="status-card"><div class="s-idle">Point camera at QR · or enter email below</div></div>
+  <div class="undo-bar" id="undo-bar">
+    <span class="undo-lbl" id="undo-lbl">Undo check-in</span>
+    <div class="undo-track"><div class="undo-fill" id="undo-fill"></div></div>
+    <span class="undo-timer" id="undo-timer">15s</span>
+    <button class="btn-undo" onclick="doUndo()">Undo</button>
   </div>
-
-  <div class="status-card" id="status-card">
-    <div class="status-idle">Scan QR or enter email below</div>
-  </div>
-
-  <!-- Group picker with member list -->
   <div class="group-picker" id="group-picker">
-    <div class="picker-header">
-      <div class="picker-label">Group Booking — Meals</div>
-      <div class="picker-name" id="picker-name">–</div>
+    <div class="gp-head">
+      <div class="gp-title">Group booking — select who's arriving</div>
+      <div class="gp-name" id="gp-name">–</div>
     </div>
-    <div class="member-list" id="member-list"></div>
-    <div class="picker-qty">
-      <div class="qty-lbl">Serving</div>
-      <button class="qty-btn" onclick="changeQty(-1)">−</button>
-      <div class="qty-num" id="qty-num">1</div>
-      <div style="font-size:.54rem;color:var(--txt-l);letter-spacing:.08em" id="qty-of-lbl">of – remaining</div>
-      <button class="qty-btn" onclick="changeQty(1)">+</button>
-    </div>
-    <div class="picker-actions">
-      <button class="btn-cancel-pick" onclick="cancelQty()">Cancel</button>
-      <button class="btn-confirm-pick" id="btn-confirm" onclick="confirmQty()">Serve Meal →</button>
+    <div class="gp-list" id="gp-list"></div>
+    <div class="gp-foot">
+      <span class="gp-count" id="gp-count">0 selected</span>
+      <button class="btn-gp-x" onclick="cancelGroup()">Cancel</button>
+      <button class="btn-gp-ok" onclick="confirmGroup()">Give →</button>
     </div>
   </div>
-
-  <div class="section-line"><span>or enter email</span></div>
-
   <div class="manual-wrap">
-    <input class="manual-input" type="email" id="manual-email" placeholder="attendee@email.com" autocomplete="off" autocapitalize="off" autocorrect="off">
-    <button class="btn-manual" onclick="manualServe()">→</button>
+    <input class="manual-input" id="manual-email" type="email" placeholder="Enter email to give meal" autocomplete="off" autocapitalize="off" autocorrect="off">
+    <button class="btn-manual" onclick="manualCI()">→</button>
+  </div>
+  <div class="feed" id="feed" style="display:none">
+    <div class="feed-title">Recent activity</div>
+    <div class="feed-list" id="feed-list"></div>
   </div>
 </div>
-
 <!-- ROSTER PANE -->
 <div class="pane" id="pane-roster">
-  <div class="roster-search-wrap">
-    <span style="font-size:.8rem;color:var(--txt-l)">◎</span>
-    <input type="search" id="roster-search" placeholder="Search name or email…" oninput="filterRoster()" autocomplete="off" autocapitalize="off">
+  <div class="search-row">
+    <span style="color:var(--lo);font-size:.8rem">⌕</span>
+    <input type="search" id="r-search" placeholder="Search name or email…" oninput="filterRoster()" autocomplete="off" autocapitalize="off">
   </div>
-  <div class="roster-stats">
-    <div class="roster-stat"><strong id="stat-total">–</strong>Registered</div>
-    <div class="roster-stat"><strong id="stat-served">–</strong>Served</div>
-    <div class="roster-stat"><strong id="stat-eligible">–</strong>Eligible</div>
+  <div class="ftabs">
+    <button class="ftab active" onclick="setF('all',this)">All</button>
+    <button class="ftab" onclick="setF('pending',this)">Pending</button>
+    <button class="ftab" onclick="setF('in',this)">Given</button>
+    <button class="ftab" onclick="setF('partial',this)">Partial</button>
   </div>
-  <div id="roster-list"><div class="roster-empty">Loading roster…</div></div>
+  <div class="r-stats">
+    <div class="r-stat"><strong id="st-total">–</strong><span>Registered</span></div>
+    <div class="r-stat"><strong id="st-in">–</strong><span>Given</span></div>
+    <div class="r-stat"><strong id="st-pending">–</strong><span>Pending</span></div>
+  </div>
+  <div id="r-list"><div class="r-loading">Loading roster…</div></div>
 </div>
-
+<!-- STATS PANE -->
+<div class="pane" id="pane-stats">
+  <div class="stats-refresh-row">
+    <span class="stats-refresh-lbl">Event overview · all stations</span>
+    <button class="btn-stats-refresh" onclick="refreshStats()">↻ Refresh</button>
+  </div>
+  <!-- Door -->
+  <div class="stat-station-card door">
+    <div class="ssc-head">
+      <span class="ssc-title">🍱 Meal</span>
+      <span class="ssc-pct door" id="stats-door-pct">–%</span>
+    </div>
+    <div class="ssc-track"><div class="ssc-fill door" id="stats-door-bar" style="width:0%"></div></div>
+    <div class="ssc-nums">
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-in">–</span><span class="ssc-num-l">Given</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-pending">–</span><span class="ssc-num-l">Pending</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-total">–</span><span class="ssc-num-l">Total</span></div>
+    </div>
+  </div>
+  <!-- Banana -->
+  <div class="stat-station-card banana">
+    <div class="ssc-head">
+      <span class="ssc-title">🍌 Banana</span>
+      <span class="ssc-pct banana" id="stats-bn-pct">–%</span>
+    </div>
+    <div class="ssc-track"><div class="ssc-fill banana" id="stats-bn-bar" style="width:0%"></div></div>
+    <div class="ssc-nums">
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-given">–</span><span class="ssc-num-l">Given</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-pending">–</span><span class="ssc-num-l">Pending</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-total">–</span><span class="ssc-num-l">Eligible</span></div>
+    </div>
+  </div>
+  <!-- Meal -->
+  <div class="stat-station-card meal">
+    <div class="ssc-head">
+      <span class="ssc-title">🍱 Meal</span>
+      <span class="ssc-pct meal" id="stats-ml-pct">–%</span>
+    </div>
+    <div class="ssc-track"><div class="ssc-fill meal" id="stats-ml-bar" style="width:0%"></div></div>
+    <div class="ssc-nums">
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-given">–</span><span class="ssc-num-l">Given</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-pending">–</span><span class="ssc-num-l">Pending</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-total">–</span><span class="ssc-num-l">Eligible</span></div>
+    </div>
+  </div>
+  <hr class="divider-row">
+  <!-- Flow rate breakdown -->
+  <div class="flow-card">
+    <div class="flow-card-title">Avg arrival rate (last 10 min)</div>
+    <div class="flow-row"><span class="flow-dot door"></span><span class="flow-label">Door arrivals</span><span class="flow-val" id="stats-flow-door">–/min</span></div>
+    <div class="flow-row"><span class="flow-dot banana"></span><span class="flow-label">Bananas distributed</span><span class="flow-val" id="stats-flow-bn">–/min</span></div>
+    <div class="flow-row"><span class="flow-dot meal"></span><span class="flow-label">Meals distributed</span><span class="flow-val" id="stats-flow-ml">–/min</span></div>
+  </div>
+  <div style="text-align:center;font-family:var(--mono);font-size:.5rem;color:var(--lo);margin-top:8px" id="stats-last-refresh">Not yet refreshed</div>
+</div>
 <!-- SETTINGS PANE -->
 <div class="pane" id="pane-settings">
-  <div class="s-label">Webhook URL</div>
-  <input class="s-input" type="url" id="webhook-input" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-  <div class="s-row">
-    <button class="btn-save" onclick="saveWebhook()">Save &amp; Test →</button>
-    <button class="btn-clear-set" onclick="clearWebhook()">Clear</button>
+  <div class="set-section">
+    <div class="set-label">Station name</div>
+    <input class="set-input" id="set-stn" type="text" placeholder="Main Door" autocomplete="off">
+    <button class="btn-primary" onclick="saveName()" style="max-width:160px">Save name</button>
   </div>
-  <div class="webhook-status" id="webhook-status"></div>
-  <hr class="s-divider">
-  <div class="s-info">
-    <strong>Meal Station</strong> — tracks meal distribution per attendee.<br>
-    Attendee must be checked in at Main Door first.<br>
-    Use the same webhook URL as all other station scanners.<br>
-    Roster syncs every 30 s while connected.
+  <hr class="set-divider">
+  <div class="set-section">
+    <div class="set-label">Webhook URL</div>
+    <input class="set-input" id="set-wh" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div class="set-row">
+      <button class="btn-primary" onclick="saveWH()">Save & test →</button>
+      <button class="btn-ghost" onclick="clearWH()">Clear</button>
+    </div>
+    <div class="set-status" id="wh-status"></div>
+  </div>
+  <hr class="set-divider">
+  <div class="set-section">
+    <div class="set-label">Total seats</div>
+    <input class="set-input" id="set-seats" type="number" placeholder="100" min="1" style="margin-bottom:7px">
+    <button class="btn-primary" onclick="saveSeats()" style="max-width:160px">Save</button>
+  </div>
+  <hr class="set-divider">
+  <div class="set-info">
+    Station: <span id="i-stn" style="color:var(--accent-b)">–</span><br>
+    Offline queue: <span id="i-q">0 scans</span><br>
+    Last sync: <span id="i-sync">–</span><br>
+    Roster auto-polls every 30s when connected.
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 <div class="loader" id="loader"><div class="spin"></div><div class="loader-txt" id="loader-txt">Processing…</div></div>
-
 <script>
-/* ── CONFIG ── */
-var WEBHOOK_URL = localStorage.getItem('rsnd_meal_webhook') || '';
-var COOLDOWN_MS = 2200;
+var WH=localStorage.getItem('rsnd_meal_wh')||'';
+var STN=localStorage.getItem('rsnd_meal_stn')||'';
+var TOTAL=parseInt(localStorage.getItem('rsnd_meal_seats')||'100',10);
+var COOL=2200,UNDO_MS=15000;
+var roster=[],scanCool=false,camRun=false,qr=null;
+var queue=JSON.parse(localStorage.getItem('rsnd_meal_q')||'[]');
+var online=navigator.onLine,lastSync=null,curF='all';
+var flowData=[],actLog=[],lastCI=null,pGroup=null,gSel=[];
+var _tt=null,_ci=null,_poll=null,_ui=null,_uI=null,_wl=null,_ch=null;
 
-/* ── STATE ── */
-var rosterData    = [];
-var scanCooldown  = false;
-var cameraRunning = false;
-var html5QrCode   = null;
-var _toastTimer   = null;
-var _cooldownInt  = null;
-var _pollTimer    = null;
-var _pending      = null; // { email, attendee, remaining }
-var _qtyValue     = 1;
-var MEAL_EMOJIS   = ['🍽️','🥗','🍱','🥘','🍲'];
-
-/* ── INIT ── */
-window.addEventListener('DOMContentLoaded', function() {
-  if (WEBHOOK_URL) {
-    document.getElementById('webhook-input').value = WEBHOOK_URL;
-    loadRoster(true); startPoll();
-  } else {
-    switchTab('settings');
-    toast('Configure webhook URL to begin', 'warn');
-  }
+window.addEventListener('DOMContentLoaded',function(){
+  if(!STN){document.getElementById('modal-bg').classList.add('on');}
+  else{applySettings();if(WH){loadRoster(true);startPoll();}else{sw('settings');toast('Configure webhook in Setup','warn');}}
+  if(localStorage.getItem('rsnd_meal_seats'))document.getElementById('set-seats').value=localStorage.getItem('rsnd_meal_seats');
+  updateNetUI();
+  window.addEventListener('online',function(){online=true;updateNetUI();syncQ();});
+  window.addEventListener('offline',function(){online=false;updateNetUI();});
 });
 
-/* ── POLL ── */
-function startPoll() { if (_pollTimer) clearInterval(_pollTimer); _pollTimer = setInterval(function() { loadRoster(false); }, 30000); }
-function stopPoll()  { if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; } }
-
-/* ── TABS ── */
-function switchTab(name) {
-  ['scanner','roster','settings'].forEach(function(t) {
-    document.getElementById('tab-'+t).classList.toggle('active', t===name);
-    document.getElementById('pane-'+t).classList.toggle('active', t===name);
-  });
-  if (name === 'roster') filterRoster();
-  if (name !== 'scanner') safeStopCamera();
+function onboardOK(){
+  var n=document.getElementById('m-stn').value.trim(),u=document.getElementById('m-wh').value.trim();
+  if(!n){document.getElementById('m-stn').focus();return;}
+  if(!u){document.getElementById('m-wh').focus();return;}
+  STN=n;WH=u;localStorage.setItem('rsnd_meal_stn',n);localStorage.setItem('rsnd_meal_wh',u);
+  document.getElementById('modal-bg').classList.remove('on');
+  applySettings();loadRoster(true);startPoll();toast('Station ready: '+n,'ok');
 }
 
-/* ── CAMERA ── */
-function toggleCamera() { cameraRunning ? safeStopCamera() : startCamera(); }
-function startCamera() {
-  if (!window.Html5Qrcode) { toast('QR library not loaded', 'err'); return; }
-  html5QrCode = new Html5Qrcode('reader');
-  Html5Qrcode.getCameras().then(function(devices) {
-    if (!devices || !devices.length) { toast('No camera found', 'err'); return; }
-    var cam = devices.find(function(d) { return /back|rear|environment/i.test(d.label); }) || devices[devices.length-1];
-    return html5QrCode.start(cam.id, {fps:10,qrbox:{width:220,height:220}},
-      function(text) { onScanResult(text); }, function() {});
-  }).then(function() {
-    cameraRunning = true;
-    document.getElementById('cam-label').textContent = 'Stop Camera';
-    document.getElementById('btn-cam').classList.add('active');
-    document.getElementById('scan-line').style.display = 'block';
-  }).catch(function(err) {
-    toast(/denied|NotAllowed/i.test(String(err)) ? 'Camera access denied' : 'Camera error', 'err');
-    html5QrCode = null;
-  });
+function applySettings(){
+  document.getElementById('stn-display').textContent=STN||'Meal Station';
+  document.getElementById('set-stn').value=STN;
+  if(WH)document.getElementById('set-wh').value=WH;
+  updateInfo();
 }
-function safeStopCamera() {
-  if (!html5QrCode) { cameraRunning = false; setCamIdle(); return; }
-  var ref = html5QrCode; html5QrCode = null;
-  ref.stop().catch(function(){}).finally(function() { cameraRunning = false; setCamIdle(); });
+
+function updateNetUI(){
+  var p=document.getElementById('net-pill'),t=document.getElementById('net-txt');
+  p.className='net-pill'+(online?'':' offline');t.textContent=online?'Live':'Offline';
+  document.getElementById('qc').textContent=queue.length;
+  document.getElementById('s-offline').className='strip s-offline'+((!online||queue.length>0)?' on':'');
+  document.getElementById('i-q').textContent=queue.length+' scan(s)';
 }
-function setCamIdle() {
-  document.getElementById('cam-label').textContent = 'Start Camera';
+
+function saveQ(){localStorage.setItem('rsnd_meal_q',JSON.stringify(queue));updateNetUI();}
+
+function syncQ(){
+  if(!online||queue.length===0||!WH)return;
+  var sb=document.getElementById('s-sync');sb.classList.add('on');
+  document.getElementById('sync-txt').textContent='Syncing '+queue.length+' scan(s)…';
+  var q=queue.slice();queue=[];saveQ();var done=0,fail=[];
+  function next(){
+    if(done>=q.length){sb.classList.remove('on');if(fail.length){queue=fail;saveQ();toast(fail.length+' scan(s) failed','err');}else toast('Synced '+q.length+' scan(s)','ok');loadRoster(false);return;}
+    var item=q[done++];
+    apiPost({action:'checkMeal',email:item.email,quantity:item.quantity,station:STN},function(r){if(!r.success)fail.push(item);next();});
+  }
+  next();
+}
+
+function toggleCam(){if(camRun)stopCam();else startCam();}
+
+function startCam(){
+  if(!Html5Qrcode){toast('QR library not loaded','err');return;}
+  qr=new Html5Qrcode('reader');
+  Html5Qrcode.getCameras().then(function(devs){
+    if(!devs||!devs.length){toast('No camera found','err');return;}
+    var c=devs.find(function(d){return/back|rear|environment/i.test(d.label);})||devs[devs.length-1];
+    return qr.start(c.id,{fps:10,qrbox:{width:220,height:220}},function(t){onScan(t);},function(){});
+  }).then(function(){
+    camRun=true;document.getElementById('cam-lbl').textContent='Stop Camera';
+    document.getElementById('btn-cam').classList.add('active');document.getElementById('scan-line').style.display='block';
+    acquireWL();startCH();
+  }).catch(function(e){toast(/denied|NotAllowed/i.test(String(e))?'Camera access denied':'Camera error','err');qr=null;});
+}
+
+function stopCam(){
+  stopCH();releaseWL();
+  if(!qr){camRun=false;camIdle();return;}
+  var ref=qr;qr=null;ref.stop().catch(function(){}).finally(function(){camRun=false;camIdle();});
+}
+
+function camIdle(){
+  document.getElementById('cam-lbl').textContent='Start Camera';
   document.getElementById('btn-cam').classList.remove('active');
-  document.getElementById('scan-line').style.display = 'none';
+  document.getElementById('scan-line').style.display='none';
 }
 
-/* ── SCAN ── */
-function onScanResult(raw) {
-  if (scanCooldown) return;
-  var email = raw.trim().toLowerCase();
-  if (!isValidEmail(email)) { toast('Invalid QR – not an email', 'err'); return; }
-  startCooldown(); processMeal(email);
-}
-function startCooldown() {
-  scanCooldown = true;
-  var fill = document.getElementById('cooldown-fill'), start = Date.now();
-  fill.style.width = '100%'; clearInterval(_cooldownInt);
-  _cooldownInt = setInterval(function() {
-    var e = Date.now()-start, pct = Math.max(0,100-(e/COOLDOWN_MS*100));
-    fill.style.width = pct.toFixed(1)+'%';
-    if (e >= COOLDOWN_MS) { scanCooldown = false; fill.style.width = '0%'; clearInterval(_cooldownInt); }
-  }, 50);
+function startCH(){stopCH();var last=Date.now();_ch=setInterval(function(){if(!camRun){stopCH();return;}if(Date.now()-last>1500000){stopCam();setTimeout(startCam,800);last=Date.now();}},60000);}
+function stopCH(){if(_ch){clearInterval(_ch);_ch=null;}}
+function acquireWL(){if(!navigator.wakeLock)return;navigator.wakeLock.request('screen').then(function(wl){_wl=wl;wl.addEventListener('release',function(){_wl=null;});}).catch(function(){});}
+function releaseWL(){if(_wl){_wl.release();_wl=null;}}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&camRun)acquireWL();});
+
+function onScan(raw){
+  if(scanCool)return;
+  var email=raw.trim().toLowerCase();
+  if(!isEmail(email)){toast('Invalid QR — not an email','err');return;}
+  startCD();processCI(email);
 }
 
-/* ── MANUAL ── */
-function manualServe() {
-  var email = document.getElementById('manual-email').value.trim().toLowerCase();
-  if (!email || !isValidEmail(email)) { toast('Enter a valid email', 'err'); return; }
-  processMeal(email); document.getElementById('manual-email').value = '';
+function startCD(){
+  scanCool=true;var f=document.getElementById('cd-fill'),s=Date.now();f.style.width='100%';clearInterval(_ci);
+  _ci=setInterval(function(){var e=Date.now()-s;f.style.width=Math.max(0,100-(e/COOL*100)).toFixed(1)+'%';if(e>=COOL){scanCool=false;f.style.width='0%';clearInterval(_ci);}},40);
 }
-document.getElementById('manual-email').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') manualServe();
-});
 
-/* ── MEAL FLOW ── */
-function processMeal(email) {
-  if (!WEBHOOK_URL) { toast('No webhook configured', 'err'); return; }
-  var attendee = rosterData.find(function(a) { return a.email === email; });
+function manualCI(){
+  var e=document.getElementById('manual-email').value.trim().toLowerCase();
+  if(!e||!isEmail(e)){toast('Enter a valid email','err');return;}
+  processCI(e);document.getElementById('manual-email').value='';
+}
+document.getElementById('manual-email').addEventListener('keydown',function(e){if(e.key==='Enter')manualCI();});
 
-  if (!attendee) { sendMeal(email, 1); return; }
-
-  if (!attendee.checkedIn) {
-    setStatusCard({ type:'err', name:attendee.name, email:email,
-      badge:'Not checked in at Main Door', badgeType:'err',
-      meta:'This person must check in at the door first.' });
-    vibrate([200]); toast('Must check in at Main Door first', 'err'); return;
+function processCI(email){
+  if(!WH&&online){toast('No webhook configured','err');return;}
+  var att=roster.find(function(a){return a.email===email;});
+  if(!att){if(!online)queueScan(email,1);else sendCI(email,1);return;}
+  if(att&&att.checkedIn===0){
+    setCard({type:'err',name:att.name,email:email,badge:'Not checked in at door',bt:'err',meta:'Attendee must check in at the Main Door first.'});
+    vibrate([200]);return;
   }
+  var rem=att.totalSeats-(att.mealsGiven||0);
+  if(rem<=0){setCard({type:'warn',name:att.name,email:email,badge:'All meals already given',bt:'warn',meta:'All meals for this group already given.'});vibrate([100,50,100]);return;}
+  if(att.totalSeats===1){sendCI(email,1);return;}
+  showGP(att);
+}
 
-  var remaining = attendee.totalSeats - attendee.mealsGiven;
-  if (remaining <= 0) {
-    setStatusCard({ type:'warn', name:attendee.name, email:email,
-      badge:'Meal already served', badgeType:'warn',
-      meta:'All ' + attendee.totalSeats + ' meal(s) distributed.' });
-    vibrate([100,50,100]); toast('Meal already served', 'warn'); return;
+function showGP(att){
+  pGroup=att;gSel=[];
+  document.getElementById('gp-name').textContent=att.name;
+  var list=document.getElementById('gp-list');list.innerHTML='';
+  var members=att.members||[];var seats=att.seats||[];
+  for(var i=0;i<att.totalSeats;i++){
+    var m=members[i]||{name:i===0?att.name:'Attendee '+(i+1),seat:seats[i]||'–'};
+    var alr=i<att.checkedIn;
+    var div=document.createElement('div');
+    div.className='gm'+(alr?' already-in':' selected');div.setAttribute('data-idx',i);
+    if(!alr)gSel.push(i);
+    div.innerHTML='<div class="gm-chk"><svg class="chk-ico" viewBox="0 0 9 7"><polyline points="1,3.5 3.2,5.8 8,1"/></svg></div><div class="gm-info"><div class="gm-name">'+esc(m.name)+'</div><div class="gm-seat">Seat '+esc(String(m.seat))+'</div></div>'+(alr?'<div class="gm-tag">In</div>':'');
+    if(!alr)div.onclick=function(){toggleGM(this);};
+    list.appendChild(div);
   }
-
-  if (remaining === 1 && attendee.totalSeats === 1) { sendMeal(email, 1); return; }
-
-  showGroupPicker(email, attendee, remaining);
+  updGPC();document.getElementById('group-picker').classList.add('visible');
 }
 
-/* ── GROUP PICKER ── */
-function buildMemberList(attendee, remaining) {
-  var list = document.getElementById('member-list'); list.innerHTML = '';
-  var total = attendee.totalSeats, given = attendee.mealsGiven;
-  for (var i = 0; i < total; i++) {
-    var hasServed = i < given;
-    var row = document.createElement('div'); row.className = 'member-row';
-    var nameLabel = i === 0 ? attendee.name : 'Group Member ' + (i+1);
-    row.innerHTML =
-      '<div class="member-seat">Seat ' + (i+1) + '</div>' +
-      '<div class="member-name">' + esc(nameLabel) + '</div>' +
-      '<div class="member-status ' + (hasServed ? 'served' : 'pending') + '">' +
-        (hasServed ? '✓ Served' : 'Pending') +
-      '</div>';
-    list.appendChild(row);
-  }
-}
+function toggleGM(el){var idx=parseInt(el.getAttribute('data-idx')),pos=gSel.indexOf(idx);if(pos>=0){gSel.splice(pos,1);el.classList.remove('selected');}else{gSel.push(idx);el.classList.add('selected');}updGPC();}
+function updGPC(){document.getElementById('gp-count').textContent=gSel.length+' selected';}
+function cancelGroup(){pGroup=null;gSel=[];document.getElementById('group-picker').classList.remove('visible');}
+function confirmGroup(){if(!pGroup||gSel.length===0){toast('Select at least one person','err');return;}var e=pGroup.email,q=gSel.length;cancelGroup();sendCI(e,q);}
 
-function showGroupPicker(email, attendee, remaining) {
-  _pending = { email:email, attendee:attendee, remaining:remaining };
-  _qtyValue = remaining;
-  document.getElementById('picker-name').textContent = attendee.name.toUpperCase();
-  document.getElementById('qty-num').textContent = remaining;
-  document.getElementById('qty-of-lbl').textContent = 'of ' + remaining + ' remaining';
-  buildMemberList(attendee, remaining);
-  document.getElementById('group-picker').classList.add('visible');
-  document.getElementById('btn-confirm').focus();
-}
-
-function changeQty(d) {
-  if (!_pending) return;
-  _qtyValue = Math.max(1, Math.min(_pending.remaining, _qtyValue + d));
-  document.getElementById('qty-num').textContent = _qtyValue;
-}
-function cancelQty() { _pending = null; _qtyValue = 1; document.getElementById('group-picker').classList.remove('visible'); }
-function confirmQty() { if (!_pending) return; var e=_pending.email, q=_qtyValue; cancelQty(); sendMeal(e,q); }
-
-function sendMeal(email, quantity) {
-  setLoading(true, 'Serving meal(s)…');
-  apiPost({ action:'checkMeal', email:email, quantity:quantity }, function(res) {
+function sendCI(email,qty){
+  if(!online){queueScan(email,qty);return;}
+  setLoading(true,'Distributing meal…');
+  apiPost({action:'checkMeal',email:email,quantity:qty,station:STN},function(res){
     setLoading(false);
-    if (res.success) {
-      setStatusCard({ type:'ok', name:res.name||email, email:email,
-        badge:'Served  ' + res.given + ' / ' + res.totalSeats, badgeType:'ok',
-        meta: res.given < res.totalSeats
-          ? (res.totalSeats - res.given) + ' meal(s) still to serve'
-          : 'Full group served ✓' });
-      toast('🍽️ ' + (res.name||email), 'ok');
-      vibrate([60]); launchBurst(); loadRoster(false);
-    } else {
-      setStatusCard({ type:'err', name:email, email:'', badge:'Rejected', badgeType:'err', meta:res.error||'Could not serve meal' });
-      toast(res.error||'Failed', 'err'); vibrate([200]);
+    if(res.success){
+      var name=res.name||email;
+      setCard({type:'ok',name:name,email:email,badge:'Meal given '+res.given+' / '+res.totalSeats,bt:'ok',meta:res.given<res.totalSeats?(res.totalSeats-res.given)+' meal(s) still to give':'All meals given ✓',station:STN});
+      toast('🍱 Meal given to '+name,'ok');vibrate([60]);
+      addAct({type:'ok',name:name,detail:'Given '+res.given+'/'+res.totalSeats+' · '+STN,time:new Date()});
+      lastCI={email:email,quantity:qty};startUndo();trackFlow();loadRoster(false);
+    }else{
+      setCard({type:'err',name:res.name||email,email:'',badge:'Rejected',bt:'err',meta:res.error||'Failed'});
+      toast(res.error||'Check-in failed','err');vibrate([200]);
+      addAct({type:'err',name:res.name||email,detail:res.error||'Failed',time:new Date()});
     }
   });
 }
 
-/* ── STATUS CARD ── */
-function setStatusCard(opts) {
-  var card = document.getElementById('status-card');
-  card.className = 'status-card ' + (opts.type||'');
-  card.innerHTML =
-    '<div class="status-name">' + esc(opts.name) + '</div>' +
-    (opts.email ? '<div class="status-email">' + esc(opts.email) + '</div>' : '') +
-    '<span class="status-badge ' + (opts.badgeType||'') + '">' + esc(opts.badge) + '</span>' +
-    (opts.meta ? '<div class="status-meta">' + esc(opts.meta) + '</div>' : '');
+function queueScan(email,qty){
+  queue.push({email:email,quantity:qty,ts:Date.now(),station:STN});saveQ();
+  setCard({type:'warn',name:email,email:'',badge:'Queued offline',bt:'warn',meta:'Will sync when connection restores.'});
+  toast('Queued — syncs when online','warn');vibrate([50,30,50]);
+  addAct({type:'warn',name:email,detail:'Queued offline',time:new Date()});
 }
 
-/* ── ROSTER ── */
-function loadRoster(showLoader) {
-  if (!WEBHOOK_URL) return;
-  if (showLoader) setLoading(true, 'Loading roster…');
-  apiPost({ action:'getRoster' }, function(res) {
-    if (showLoader) setLoading(false);
-    if (!res.success) { if (showLoader) toast('Failed to load roster','err'); return; }
-    rosterData = (res.roster||[]).map(function(a) {
-      var raw = a.checkedIn;
-      a.checkedIn = raw===true||raw===1||(typeof raw==='string'&&raw.length>0&&raw.toLowerCase()!=='false'&&raw!=='0');
-      return a;
-    });
-    var now = new Date();
-    document.getElementById('sync-dot').classList.add('live');
-    document.getElementById('sync-lbl').textContent =
-      'synced ' + now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    document.getElementById('counter-n').textContent = res.totalMeals !== undefined ? res.totalMeals : '–';
-    updateStats(res); filterRoster();
+function startUndo(){
+  clearTimeout(_ui);clearInterval(_uI);
+  var bar=document.getElementById('undo-bar'),fill=document.getElementById('undo-fill'),te=document.getElementById('undo-timer');
+  document.getElementById('undo-lbl').textContent='Undo meal: '+(lastCI?lastCI.email:'last scan');
+  bar.classList.add('on');fill.style.width='100%';var start=Date.now();
+  _uI=setInterval(function(){
+    var e=Date.now()-start,p=Math.max(0,100-(e/UNDO_MS*100));
+    fill.style.width=p.toFixed(1)+'%';te.textContent=Math.ceil((UNDO_MS-e)/1000)+'s';
+    if(e>=UNDO_MS){clearInterval(_uI);bar.classList.remove('on');}
+  },100);
+}
+
+function doUndo(){
+  clearTimeout(_ui);clearInterval(_uI);document.getElementById('undo-bar').classList.remove('on');
+  if(!lastCI||!WH)return;
+  setLoading(true,'Reversing…');
+  apiPost({action:'undoMeal',email:lastCI.email,quantity:lastCI.quantity,station:STN},function(res){
+    setLoading(false);if(res.success){toast('Check-in reversed','ok');loadRoster(false);}else toast(res.error||'Could not undo','err');lastCI=null;
   });
 }
 
-function updateStats(res) {
-  var total    = rosterData.length;
-  var eligible = rosterData.filter(function(a){return a.checkedIn && a.mealsGiven < a.totalSeats;}).length;
-  document.getElementById('stat-total').textContent   = total;
-  document.getElementById('stat-served').textContent  = res.totalMeals !== undefined ? res.totalMeals : '–';
-  document.getElementById('stat-eligible').textContent = eligible;
-}
-
-function filterRoster() {
-  var q = (document.getElementById('roster-search').value||'').toLowerCase().trim();
-  var f = q ? rosterData.filter(function(a){return a.name.toLowerCase().indexOf(q)>=0||a.email.toLowerCase().indexOf(q)>=0;}) : rosterData;
-  renderRoster(f);
-}
-
-function renderRoster(list) {
-  var el = document.getElementById('roster-list');
-  if (!list||!list.length) {
-    el.innerHTML = '<div class="roster-empty">' + (rosterData.length===0 ? 'No data — check webhook in Setup' : 'No results') + '</div>';
-    return;
-  }
-  // Sort: eligible (checked in, not fully served) → not checked in → fully served
-  var sorted = list.slice().sort(function(a,b) {
-    var ap = a.mealsGiven >= a.totalSeats ? 2 : a.checkedIn ? 0 : 1;
-    var bp = b.mealsGiven >= b.totalSeats ? 2 : b.checkedIn ? 0 : 1;
-    return ap - bp;
-  });
-  el.innerHTML = sorted.map(function(a) {
-    var full    = a.mealsGiven >= a.totalSeats;
-    var partial = a.mealsGiven > 0 && !full;
-    var rowCls  = full ? 'attendee-row served' : partial ? 'attendee-row partial' : !a.checkedIn ? 'attendee-row blocked' : 'attendee-row';
-    var tagCls, tagTxt, onclick;
-    if (full)          { tagCls='ml-tag done';    tagTxt='✓ Served';   onclick=''; }
-    else if (!a.checkedIn){ tagCls='ml-tag blocked'; tagTxt='Not in yet'; onclick=''; }
-    else if (partial)  { tagCls='ml-tag part';    tagTxt=a.mealsGiven+'/'+a.totalSeats+' · Serve'; onclick='onclick="rosterServe(\''+escAttr(a.email)+'\')"'; }
-    else               { tagCls='ml-tag serve';   tagTxt='Serve';      onclick='onclick="rosterServe(\''+escAttr(a.email)+'\')"'; }
-    var detail = a.checkedIn
-      ? (full ? 'All meals served' : a.mealsGiven + ' served, ' + (a.totalSeats-a.mealsGiven) + ' remaining')
-      : 'Not checked in at main door';
-    return '<div class="'+rowCls+'">'+
-      '<div class="att-info">'+
-        '<div class="att-name">'  + esc(a.name)  + '</div>'+
-        '<div class="att-email">' + esc(a.email) + '</div>'+
-        '<div class="att-detail">' + a.totalSeats + ' seat(s) · ' + detail + '</div>'+
-      '</div>'+
-      '<span class="'+tagCls+'" '+onclick+'>'+tagTxt+'</span>'+
-    '</div>';
+function addAct(item){actLog.unshift(item);if(actLog.length>8)actLog.pop();renderAct();document.getElementById('feed').style.display=actLog.length?'block':'none';}
+function renderAct(){
+  document.getElementById('feed-list').innerHTML=actLog.slice(0,5).map(function(a){
+    var t=a.time,h=t.getHours().toString().padStart(2,'0'),m=t.getMinutes().toString().padStart(2,'0'),s=t.getSeconds().toString().padStart(2,'0');
+    return '<div class="feed-item"><div class="f-dot '+a.type+'"></div><div class="f-body"><div class="f-name">'+esc(a.name)+'</div><div class="f-detail">'+esc(a.detail)+'</div></div><div class="f-time">'+h+':'+m+':'+s+'</div></div>';
   }).join('');
 }
 
-function rosterServe(email) { switchTab('scanner'); setTimeout(function(){processMeal(email);}, 120); }
+function trackFlow(){flowData.push(Date.now());var co=Date.now()-600000;flowData=flowData.filter(function(t){return t>co;});document.getElementById('flow-lbl').textContent=(flowData.length/10).toFixed(1)+'/min (10m avg)';}
 
-/* ── SETTINGS ── */
-function saveWebhook() {
-  var url = document.getElementById('webhook-input').value.trim();
-  if (!url) { toast('Enter a webhook URL','err'); return; }
-  WEBHOOK_URL = url; localStorage.setItem('rsnd_meal_webhook', url);
-  var s = document.getElementById('webhook-status'); s.style.color='var(--txt-l)'; s.textContent='Testing…';
-  apiPost({action:'getRoster'}, function(res) {
-    if (res.success) {
-      s.style.color='var(--green)';
-      s.textContent='✓ Connected — ' + (res.roster||[]).length + ' attendee(s)';
-      toast('Connected!','ok');
-      rosterData = res.roster||[];
-      document.getElementById('counter-n').textContent = res.totalMeals!==undefined ? res.totalMeals : '–';
-      filterRoster(); startPoll();
-    } else {
-      s.style.color='var(--red)';
-      s.textContent='✗ ' + (res.error||'Connection failed');
-      toast('Connection failed','err');
-    }
+function setCard(o){
+  var c=document.getElementById('status-card');c.className='status-card '+(o.type||'');
+  c.innerHTML='<div class="s-name">'+esc(o.name)+'</div>'+(o.email?'<div class="s-email">'+esc(o.email)+'</div>':'')+'<span class="s-badge '+(o.bt||'")>'+esc(o.badge)+'</span>'+(o.meta?'<div class="s-meta">'+esc(o.meta)+'</div>':'')+(o.station?'<div class="s-stn">via '+esc(o.station)+'</div>':'');
+}
+
+function loadRoster(show){
+  if(!WH)return;if(show)setLoading(true,'Loading roster…');
+  apiPost({action:'getRoster'},function(res){
+    if(show)setLoading(false);if(!res.success){if(show)toast('Failed to load roster','err');return;}
+    roster=(res.roster||[]).map(function(a){
+      a.checkedIn=typeof a.checkedIn==='number'?a.checkedIn:(parseInt(a.checkedIn)||0);
+      a.mealsGiven=typeof a.mealsGiven==='number'?a.mealsGiven:(parseInt(a.mealsGiven)||0);
+      if(a.mealStatus){var mm=a.mealStatus.match(/GIVEN:\s*(\d+)/);if(mm)a.mealsGiven=parseInt(mm[1]);}
+      if(a.checkInStatus){var m=a.checkInStatus.match(/CHECKED IN:\s*(\d+)/);if(m)a.checkedIn=parseInt(m[1]);}
+      a.seats=a.seats||(a.seatsRaw?a.seatsRaw.split(',').map(function(s){return s.trim();}):[]);
+      a.members=a.members||buildMembers(a);return a;
+    });
+    var now=new Date();lastSync=now;var st=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    document.getElementById('sync-lbl').textContent='synced '+st;document.getElementById('i-sync').textContent=st;
+    updateCounter(res.totalMeals,res.totalSeats||TOTAL);updateStats(res);filterRoster();
+    updateStatsPaneDoor(res);
+    if(online&&queue.length>0)syncQ();
   });
 }
-function clearWebhook() {
-  WEBHOOK_URL=''; localStorage.removeItem('rsnd_meal_webhook');
-  document.getElementById('webhook-input').value=''; document.getElementById('webhook-status').textContent='';
-  stopPoll(); rosterData=[]; renderRoster([]);
-  document.getElementById('counter-n').textContent='–';
-  document.getElementById('sync-dot').classList.remove('live');
-  toast('Webhook cleared','warn');
+
+function buildMembers(a){
+  var out=[{name:a.name,seat:a.seats&&a.seats[0]?a.seats[0]:'–'}];
+  if(a.att2Name)out.push({name:a.att2Name,seat:a.att2Seat||'–'});
+  if(a.att3Name)out.push({name:a.att3Name,seat:a.att3Seat||'–'});
+  return out;
 }
 
-/* ── BURST ANIMATION ── */
-function launchBurst() {
-  var wrap = document.getElementById('burst-wrap'); wrap.innerHTML=''; wrap.classList.add('on');
-  for (var i=0; i<18; i++) {
-    var el = document.createElement('div'); el.className='meal-emoji';
-    el.textContent = MEAL_EMOJIS[Math.floor(Math.random()*MEAL_EMOJIS.length)];
-    var dur = (1.0+Math.random()*1.1).toFixed(2)+'s';
-    var del = (Math.random()*.55).toFixed(2)+'s';
-    var rot = (Math.random()>.5?1:-1)*(180+Math.floor(Math.random()*360))+'deg';
-    el.style.setProperty('--md', dur);
-    el.style.setProperty('--mdd', del);
-    el.style.setProperty('--mr', rot);
-    el.style.top = '-60px';
-    el.style.left = (2+Math.random()*92).toFixed(1)+'%';
-    wrap.appendChild(el);
-  }
-  setTimeout(function(){ wrap.innerHTML=''; wrap.classList.remove('on'); }, 3000);
+function updateCounter(checked,total){
+  document.getElementById('cv').textContent=checked!==undefined?checked:'–';
+  document.getElementById('ct').textContent=total||TOTAL;
+  var pct=total?Math.min(100,(checked/total)*100):0;
+  var f=document.getElementById('cap-fill');f.style.width=pct.toFixed(1)+'%';
+  f.className='cap-fill'+(pct>=95?' crit':pct>=80?' warn':'');
+  document.getElementById('cap-nums').textContent=(checked||0)+' / '+(total||TOTAL);
 }
 
-/* ── API ── */
-function apiPost(body, cb) {
-  if (!WEBHOOK_URL) { cb({success:false,error:'No webhook URL'}); return; }
-  fetch(WEBHOOK_URL, {method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),mode:'cors'})
-    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(function(d){ cb(d); })
-    .catch(function(err){ setLoading(false); toast('Network error','err'); cb({success:false,error:String(err)}); });
+function updateStats(res){
+  var total=roster.length,checked=roster.filter(function(a){return a.checkedIn>=a.totalSeats;}).length;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-in').textContent=res.totalMeals!==undefined?res.totalMeals:'–';
+  document.getElementById('st-pending').textContent=Math.max(0,total-checked);
 }
 
-/* ── HELPERS ── */
-function isValidEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
-function vibrate(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch(e){} }
-function setLoading(on, msg) {
-  var el = document.getElementById('loader');
-  if (on) { document.getElementById('loader-txt').textContent = msg||'Processing…'; el.classList.add('on'); }
-  else { el.classList.remove('on'); }
+/* STATS PANEL */
+function updateStatsPaneDoor(res){
+  var total=res.totalSeats||TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
+  document.getElementById('stats-door-pct').textContent=pct+'%';
+  document.getElementById('stats-door-bar').style.width=pct+'%';
+  document.getElementById('stats-door-in').textContent=checked;
+  document.getElementById('stats-door-pending').textContent=Math.max(0,(res.roster||[]).filter(function(a){return(a.checkedIn||0)<(a.totalSeats||1);}).length);
+  document.getElementById('stats-door-total').textContent=total;
+  document.getElementById('stats-flow-door').textContent=(flowData.length/10).toFixed(1)+'/min';
 }
-function toast(msg, type) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast'+(type?' '+type:''); t.classList.add('on');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(function(){ t.classList.remove('on'); }, 3400);
+
+function refreshStats(){
+  if(!WH){toast('Configure webhook first','warn');return;}
+  apiPost({action:'getRoster'},function(res){
+    if(!res.success){toast('Stats refresh failed','err');return;}
+    var total=res.totalSeats||TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
+    document.getElementById('stats-door-pct').textContent=pct+'%';
+    document.getElementById('stats-door-bar').style.width=pct+'%';
+    document.getElementById('stats-door-in').textContent=checked;
+    document.getElementById('stats-door-pending').textContent=Math.max(0,(res.roster||[]).filter(function(a){return(a.checkedIn||0)<(a.totalSeats||1);}).length);
+    document.getElementById('stats-door-total').textContent=total;
+    // Banana stats
+    var bn=res.totalBananas||0,bnTotal=checked;
+    var bnPct=bnTotal?Math.round((bn/bnTotal)*100):0;
+    document.getElementById('stats-bn-pct').textContent=bnPct+'%';
+    document.getElementById('stats-bn-bar').style.width=bnPct+'%';
+    document.getElementById('stats-bn-given').textContent=bn;
+    document.getElementById('stats-bn-pending').textContent=Math.max(0,bnTotal-bn);
+    document.getElementById('stats-bn-total').textContent=bnTotal;
+    // Meal stats
+    var ml=res.totalMeals||0,mlTotal=checked;
+    var mlPct=mlTotal?Math.round((ml/mlTotal)*100):0;
+    document.getElementById('stats-ml-pct').textContent=mlPct+'%';
+    document.getElementById('stats-ml-bar').style.width=mlPct+'%';
+    document.getElementById('stats-ml-given').textContent=ml;
+    document.getElementById('stats-ml-pending').textContent=Math.max(0,mlTotal-ml);
+    document.getElementById('stats-ml-total').textContent=mlTotal;
+    // flow
+    document.getElementById('stats-flow-door').textContent=(flowData.length/10).toFixed(1)+'/min';
+    document.getElementById('stats-flow-bn').textContent='–/min';
+    document.getElementById('stats-flow-ml').textContent='–/min';
+    var now=new Date();
+    document.getElementById('stats-last-refresh').textContent='Last refreshed '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+    toast('Stats updated','ok');
+  });
 }
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escAttr(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+
+var curF='all';
+function setF(f,el){curF=f;document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('active');});el.classList.add('active');filterRoster();}
+function filterRoster(){
+  var q=(document.getElementById('r-search').value||'').toLowerCase().trim();
+  var list=roster.filter(function(a){
+    var match=!q||a.name.toLowerCase().indexOf(q)>=0||a.email.toLowerCase().indexOf(q)>=0;if(!match)return false;
+    if(curF==='in')return a.checkedIn>=a.totalSeats;if(curF==='pending')return a.checkedIn===0;if(curF==='partial')return a.checkedIn>0&&a.checkedIn<a.totalSeats;return true;
+  });
+  renderRoster(list);
+}
+function renderRoster(list){
+  var el=document.getElementById('r-list');
+  if(!list.length){el.innerHTML='<div class="r-empty">'+(roster.length===0?'No data — check webhook in Setup':'No results')+'</div>';return;}
+  var sorted=list.slice().sort(function(a,b){return(a.checkedIn/a.totalSeats)-(b.checkedIn/b.totalSeats);});
+  el.innerHTML=sorted.map(function(a){
+    var full=a.checkedIn>=a.totalSeats,partial=a.checkedIn>0&&!full;
+    var rC='att-row'+(full?' checked':partial?' partial':'');
+    var tC=full?'done':partial?'part':'none',tT=full?'In':partial?a.checkedIn+'/'+a.totalSeats:'Give meal';
+    var oc=full?'':' onclick="rCI(\''+escAttr(a.email)+'\')"';
+    return '<div class="'+rC+'"><div class="att-info"><div class="att-name">'+esc(a.name)+'</div><div class="att-email">'+esc(a.email)+'</div><div class="att-meta">'+a.totalSeats+' seat(s)'+(a.totalSeats>1?' · Group':'')+'</div></div><span class="att-tag '+tC+'"'+oc+'>'+tT+'</span></div>';
+  }).join('');
+}
+function rCI(email){sw('scan');setTimeout(function(){processCI(email);},100);}
+
+function saveName(){var v=document.getElementById('set-stn').value.trim();if(!v)return;STN=v;localStorage.setItem('rsnd_meal_stn',v);document.getElementById('stn-display').textContent=v;updateInfo();toast('Station name saved','ok');}
+function saveWH(){
+  var u=document.getElementById('set-wh').value.trim();if(!u){toast('Enter a URL','err');return;}
+  WH=u;localStorage.setItem('rsnd_meal_wh',u);
+  var s=document.getElementById('wh-status');s.textContent='Testing…';s.style.color='var(--lo)';
+  apiPost({action:'getRoster'},function(res){
+    if(res.success){s.style.color='var(--green)';s.textContent='✓ Connected — '+(res.roster||[]).length+' attendee(s)';toast('Connected','ok');loadRoster(false);startPoll();}
+    else{s.style.color='var(--red)';s.textContent='✗ '+(res.error||'Failed');toast('Failed','err');}
+  });
+}
+function clearWH(){WH='';localStorage.removeItem('rsnd_meal_wh');document.getElementById('set-wh').value='';document.getElementById('wh-status').textContent='';stopPoll();roster=[];renderRoster([]);updateCounter(undefined,TOTAL);toast('Webhook cleared','warn');}
+function saveSeats(){var v=parseInt(document.getElementById('set-seats').value,10);if(!v||v<1){toast('Invalid','err');return;}TOTAL=v;localStorage.setItem('rsnd_meal_seats',String(v));updateCounter(undefined,v);toast('Updated','ok');}
+function updateInfo(){document.getElementById('i-stn').textContent=STN||'Not set';document.getElementById('i-q').textContent=queue.length+' scan(s)';document.getElementById('i-sync').textContent=lastSync?lastSync.getHours().toString().padStart(2,'0')+':'+lastSync.getMinutes().toString().padStart(2,'0'):'–';}
+
+function sw(n){
+  ['scan','roster','stats','settings'].forEach(function(t){document.getElementById('tab-'+t).classList.toggle('active',t===n);document.getElementById('pane-'+t).classList.toggle('active',t===n);});
+  if(n==='roster')filterRoster();if(n==='stats')refreshStats();if(n!=='scan')stopCam();
+}
+function startPoll(){if(_poll)clearInterval(_poll);_poll=setInterval(function(){loadRoster(false);},30000);}
+function stopPoll(){if(_poll){clearInterval(_poll);_poll=null;}}
+function apiPost(body,cb){
+  if(!WH){cb({success:false,error:'No webhook'});return;}
+  fetch(WH,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),mode:'cors'})
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(d){cb(d);}).catch(function(err){if(!online){cb({success:false,error:'offline'});return;}setLoading(false);toast('Network error','err');cb({success:false,error:String(err)});});
+}
+function isEmail(s){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);}
+function vibrate(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
+function setLoading(on,msg){var el=document.getElementById('loader');if(on){document.getElementById('loader-txt').textContent=msg||'Processing…';el.classList.add('on');}else el.classList.remove('on');}
+function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(function(){t.classList.remove('on');},3400);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>

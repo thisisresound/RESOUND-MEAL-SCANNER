@@ -360,16 +360,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
   <div class="stat-station-card meal">
     <div class="ssc-head">
       <span class="ssc-title">🍱 Meal</span>
-      <span class="ssc-pct meal" id="stats-door-pct">–%</span>
+      <span class="ssc-pct meal" id="stats-ml-pct">–%</span>
     </div>
-    <div class="ssc-track"><div class="ssc-fill meal" id="stats-door-bar" style="width:0%"></div></div>
+    <div class="ssc-track"><div class="ssc-fill meal" id="stats-ml-bar" style="width:0%"></div></div>
     <div class="ssc-nums">
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-in">–</span><span class="ssc-num-l">Given</span></div>
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-pending">–</span><span class="ssc-num-l">Pending</span></div>
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-total">–</span><span class="ssc-num-l">Total</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-given">–</span><span class="ssc-num-l">Given</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-pending">–</span><span class="ssc-num-l">Pending</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-total">–</span><span class="ssc-num-l">Total</span></div>
     </div>
   </div>
-  <!-- Banana -->
+  <!-- Banana cross-ref -->
   <div class="stat-station-card banana">
     <div class="ssc-head">
       <span class="ssc-title">🍌 Banana</span>
@@ -379,20 +379,20 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
     <div class="ssc-nums">
       <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-given">–</span><span class="ssc-num-l">Given</span></div>
       <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-pending">–</span><span class="ssc-num-l">Pending</span></div>
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-total">–</span><span class="ssc-num-l">Eligible</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-bn-total">–</span><span class="ssc-num-l">Total</span></div>
     </div>
   </div>
   <!-- Door cross-ref -->
   <div class="stat-station-card door">
     <div class="ssc-head">
       <span class="ssc-title">🚪 Door Check-in</span>
-      <span class="ssc-pct door" id="stats-ml-pct">–%</span>
+      <span class="ssc-pct door" id="stats-door-pct">–%</span>
     </div>
-    <div class="ssc-track"><div class="ssc-fill door" id="stats-ml-bar" style="width:0%"></div></div>
+    <div class="ssc-track"><div class="ssc-fill door" id="stats-door-bar" style="width:0%"></div></div>
     <div class="ssc-nums">
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-given">–</span><span class="ssc-num-l">Checked in</span></div>
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-pending">–</span><span class="ssc-num-l">Pending</span></div>
-      <div class="ssc-num"><span class="ssc-num-v" id="stats-ml-total">–</span><span class="ssc-num-l">Total</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-in">–</span><span class="ssc-num-l">Checked in</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-pending">–</span><span class="ssc-num-l">Pending</span></div>
+      <div class="ssc-num"><span class="ssc-num-v" id="stats-door-total">–</span><span class="ssc-num-l">Total</span></div>
     </div>
   </div>
   <hr class="divider-row">
@@ -571,7 +571,7 @@ function showGP(att){
   var members=att.members||[];var seats=att.seats||[];
   for(var i=0;i<att.totalSeats;i++){
     var m=members[i]||{name:i===0?att.name:'Attendee '+(i+1),seat:seats[i]||'–'};
-    var alr=i<att.checkedIn;
+    var alr=i<(att.mealsGiven||0);
     var div=document.createElement('div');
     div.className='gm'+(alr?' already-in':' selected');div.setAttribute('data-idx',i);
     if(!alr)gSel.push(i);
@@ -686,53 +686,62 @@ function updateCounter(checked,total){
 }
 
 function updateStats(res){
-  var total=roster.length,checked=roster.filter(function(a){return a.checkedIn>=a.totalSeats;}).length;
+  var total=roster.length,checked=roster.filter(function(a){return (a.mealsGiven||0)>=a.totalSeats;}).length;
   document.getElementById('st-total').textContent=total;
   document.getElementById('st-in').textContent=res.totalMeals!==undefined?res.totalMeals:'–';
   document.getElementById('st-pending').textContent=Math.max(0,total-checked);
 }
 
 /* STATS PANEL */
-function updateStatsPaneDoor(res){
-  var total=TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
-  document.getElementById('stats-door-pct').textContent=pct+'%';
-  document.getElementById('stats-door-bar').style.width=pct+'%';
-  document.getElementById('stats-door-in').textContent=checked;
-  document.getElementById('stats-door-pending').textContent=Math.max(0,(res.roster||[]).filter(function(a){return(a.checkedIn||0)<(a.totalSeats||1);}).length);
+function fillStatsPanel(res){
+  var total=TOTAL;
+  // Meal (primary)
+  var ml=res.totalMeals||0,mlPending=roster.reduce(function(s,a){return s+Math.max(0,(a.totalSeats||1)-(a.mealsGiven||0));},0);
+  var mlPct=total?Math.round((ml/total)*100):0;
+  document.getElementById('stats-ml-pct').textContent=mlPct+'%';
+  document.getElementById('stats-ml-bar').style.width=mlPct+'%';
+  document.getElementById('stats-ml-given').textContent=ml;
+  document.getElementById('stats-ml-pending').textContent=mlPending;
+  document.getElementById('stats-ml-total').textContent=total;
+  // Banana cross-ref
+  var bn=res.totalBananas||0,bnPending=roster.reduce(function(s,a){return s+Math.max(0,(a.totalSeats||1)-(a.bananasGiven||0));},0);
+  var bnPct=total?Math.round((bn/total)*100):0;
+  document.getElementById('stats-bn-pct').textContent=bnPct+'%';
+  document.getElementById('stats-bn-bar').style.width=bnPct+'%';
+  document.getElementById('stats-bn-given').textContent=bn;
+  document.getElementById('stats-bn-pending').textContent=bnPending;
+  document.getElementById('stats-bn-total').textContent=total;
+  // Door cross-ref
+  var doorIn=res.totalCheckedIn||0,doorPending=roster.reduce(function(s,a){return s+Math.max(0,(a.totalSeats||1)-(a.checkedIn||0));},0);
+  var doorPct=total?Math.round((doorIn/total)*100):0;
+  document.getElementById('stats-door-pct').textContent=doorPct+'%';
+  document.getElementById('stats-door-bar').style.width=doorPct+'%';
+  document.getElementById('stats-door-in').textContent=doorIn;
+  document.getElementById('stats-door-pending').textContent=doorPending;
   document.getElementById('stats-door-total').textContent=total;
-  document.getElementById('stats-flow-door').textContent=(flowData.length/10).toFixed(1)+'/min';
+  // Flow
+  document.getElementById('stats-flow-door').textContent='–/min';
+  document.getElementById('stats-flow-bn').textContent='–/min';
+  document.getElementById('stats-flow-ml').textContent=(flowData.length/10).toFixed(1)+'/min';
 }
+
+function updateStatsPaneDoor(res){fillStatsPanel(res);}
 
 function refreshStats(){
   if(!WH){toast('Configure webhook first','warn');return;}
   apiPost({action:'getRoster'},function(res){
     if(!res.success){toast('Stats refresh failed','err');return;}
-    var total=TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
-    document.getElementById('stats-door-pct').textContent=pct+'%';
-    document.getElementById('stats-door-bar').style.width=pct+'%';
-    document.getElementById('stats-door-in').textContent=checked;
-    document.getElementById('stats-door-pending').textContent=Math.max(0,(res.roster||[]).filter(function(a){return(a.checkedIn||0)<(a.totalSeats||1);}).length);
-    document.getElementById('stats-door-total').textContent=total;
-    // Banana stats
-    var bn=res.totalBananas||0,bnTotal=checked;
-    var bnPct=bnTotal?Math.round((bn/bnTotal)*100):0;
-    document.getElementById('stats-bn-pct').textContent=bnPct+'%';
-    document.getElementById('stats-bn-bar').style.width=bnPct+'%';
-    document.getElementById('stats-bn-given').textContent=bn;
-    document.getElementById('stats-bn-pending').textContent=Math.max(0,bnTotal-bn);
-    document.getElementById('stats-bn-total').textContent=bnTotal;
-    // Meal stats
-    var ml=res.totalMeals||0,mlTotal=checked;
-    var mlPct=mlTotal?Math.round((ml/mlTotal)*100):0;
-    document.getElementById('stats-ml-pct').textContent=mlPct+'%';
-    document.getElementById('stats-ml-bar').style.width=mlPct+'%';
-    document.getElementById('stats-ml-given').textContent=ml;
-    document.getElementById('stats-ml-pending').textContent=Math.max(0,mlTotal-ml);
-    document.getElementById('stats-ml-total').textContent=mlTotal;
-    // flow
-    document.getElementById('stats-flow-door').textContent=(flowData.length/10).toFixed(1)+'/min';
-    document.getElementById('stats-flow-bn').textContent='–/min';
-    document.getElementById('stats-flow-ml').textContent='–/min';
+    roster=(res.roster||[]).map(function(a){
+      a.checkedIn=typeof a.checkedIn==='number'?a.checkedIn:(parseInt(a.checkedIn)||0);
+      if(a.checkInStatus){var m=a.checkInStatus.match(/CHECKED IN:\s*(\d+)/);if(m)a.checkedIn=parseInt(m[1]);}
+      a.bananasGiven=typeof a.bananasGiven==='number'?a.bananasGiven:(parseInt(a.bananasGiven)||0);
+      if(a.bananaStatus){var bm=a.bananaStatus.match(/GIVEN:\s*(\d+)/);if(bm)a.bananasGiven=parseInt(bm[1]);}
+      a.mealsGiven=typeof a.mealsGiven==='number'?a.mealsGiven:(parseInt(a.mealsGiven)||0);
+      if(a.mealStatus){var mm=a.mealStatus.match(/GIVEN:\s*(\d+)/);if(mm)a.mealsGiven=parseInt(mm[1]);}
+      return a;
+    });
+    var computedTotal=roster.reduce(function(s,a){return s+(a.totalSeats||1);},0)||TOTAL;TOTAL=computedTotal;
+    fillStatsPanel(res);
     var now=new Date();
     document.getElementById('stats-last-refresh').textContent='Last refreshed '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
     toast('Stats updated','ok');
@@ -745,7 +754,7 @@ function filterRoster(){
   var q=(document.getElementById('r-search').value||'').toLowerCase().trim();
   var list=roster.filter(function(a){
     var match=!q||a.name.toLowerCase().indexOf(q)>=0||a.email.toLowerCase().indexOf(q)>=0;if(!match)return false;
-    if(curF==='in')return a.checkedIn>=a.totalSeats;if(curF==='pending')return a.checkedIn===0;if(curF==='partial')return a.checkedIn>0&&a.checkedIn<a.totalSeats;return true;
+    var mg=a.mealsGiven||0;if(curF==='in')return mg>=a.totalSeats;if(curF==='pending')return mg===0;if(curF==='partial')return mg>0&&mg<a.totalSeats;return true;
   });
   renderRoster(list);
 }
@@ -754,9 +763,9 @@ function renderRoster(list){
   if(!list.length){el.innerHTML='<div class="r-empty">'+(roster.length===0?'No data — check webhook in Setup':'No results')+'</div>';return;}
   var sorted=list.slice().sort(function(a,b){return(a.checkedIn/a.totalSeats)-(b.checkedIn/b.totalSeats);});
   el.innerHTML=sorted.map(function(a){
-    var full=a.checkedIn>=a.totalSeats,partial=a.checkedIn>0&&!full;
+    var mg=a.mealsGiven||0,full=mg>=a.totalSeats,partial=mg>0&&!full;
     var rC='att-row'+(full?' checked':partial?' partial':'');
-    var tC=full?'done':partial?'part':'none',tT=full?'In':partial?a.checkedIn+'/'+a.totalSeats:'Give meal';
+    var tC=full?'done':partial?'part':'none',tT=full?'Given':partial?mg+'/'+a.totalSeats:'Give meal';
     var oc=full?'':' onclick="rCI(\''+escAttr(a.email)+'\')"';
     return '<div class="'+rC+'"><div class="att-info"><div class="att-name">'+esc(a.name)+'</div><div class="att-email">'+esc(a.email)+'</div><div class="att-meta">'+a.totalSeats+' seat(s)'+(a.totalSeats>1?' · Group':'')+'</div></div><span class="att-tag '+tC+'"'+oc+'>'+tT+'</span></div>';
   }).join('');

@@ -10,8 +10,8 @@
 :root{
   --bg:#05050a;--s1:#0c0c14;--s2:#11111c;--s3:#181826;
   --blue:#3b82f6;--blue-b:#60a5fa;--blue-d:rgba(59,130,246,.08);--blue-bd:rgba(59,130,246,.18);
-  --white:#f1f5f9;--text:#cbd5e1;--mid:rgba(203,213,225,.45);--lo:rgba(203,213,225,.2);
-  --border:rgba(255,255,255,.05);--border2:rgba(255,255,255,.09);
+  --white:#f8fafc;--text:#e2e8f0;--mid:rgba(203,213,225,.75);--lo:rgba(203,213,225,.55);
+  --border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.16);
   --green:#22c55e;--green-d:rgba(34,197,94,.07);
   --red:#ef4444;--red-d:rgba(239,68,68,.07);
   --yellow:#f59e0b;--yellow-d:rgba(245,158,11,.07);
@@ -663,7 +663,7 @@ function loadRoster(show){
     });
     var now=new Date();lastSync=now;var st=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     document.getElementById('sync-lbl').textContent='synced '+st;document.getElementById('i-sync').textContent=st;
-    updateCounter(res.totalMeals,res.totalSeats||TOTAL);updateStats(res);filterRoster();
+    var computedTotal=roster.reduce(function(s,a){return s+(a.totalSeats||1);},0)||TOTAL;    TOTAL=computedTotal;    updateCounter(res.totalMeals,computedTotal);updateStats(res);filterRoster();
     updateStatsPaneDoor(res);
     if(online&&queue.length>0)syncQ();
   });
@@ -694,7 +694,7 @@ function updateStats(res){
 
 /* STATS PANEL */
 function updateStatsPaneDoor(res){
-  var total=res.totalSeats||TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
+  var total=TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
   document.getElementById('stats-door-pct').textContent=pct+'%';
   document.getElementById('stats-door-bar').style.width=pct+'%';
   document.getElementById('stats-door-in').textContent=checked;
@@ -707,7 +707,7 @@ function refreshStats(){
   if(!WH){toast('Configure webhook first','warn');return;}
   apiPost({action:'getRoster'},function(res){
     if(!res.success){toast('Stats refresh failed','err');return;}
-    var total=res.totalSeats||TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
+    var total=TOTAL,checked=res.totalMeals||0,pct=total?Math.round((checked/total)*100):0;
     document.getElementById('stats-door-pct').textContent=pct+'%';
     document.getElementById('stats-door-bar').style.width=pct+'%';
     document.getElementById('stats-door-in').textContent=checked;
